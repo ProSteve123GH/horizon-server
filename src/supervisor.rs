@@ -14,11 +14,13 @@ use crate::engine::INTERNAL_ENV;
 /// No secret is passed on the command line.
 pub fn engine_args(dir: &Path) -> Vec<String> {
     let resources = dir.join(".horizon/resources/26.3");
+    // Upstream's launch parser stops at --dedicated and treats every later argument as a
+    // dedicated-server option, so global --resources MUST come first (tablet crash 2026-11-24).
     vec![
-        "--dedicated".to_owned(),
-        "--nogui".to_owned(),
         "--resources".to_owned(),
         resources.to_string_lossy().into_owned(),
+        "--dedicated".to_owned(),
+        "--nogui".to_owned(),
         "--universe".to_owned(),
         dir.to_string_lossy().into_owned(),
     ]
@@ -60,7 +62,10 @@ mod tests {
     #[test]
     fn internal_argv_is_valid_for_upstream_entry() {
         let args = engine_args(Path::new("/srv/horizon"));
-        assert_eq!(args[0], "--dedicated");
+        assert_eq!(args[0], "--resources");
+        let dedicated = args.iter().position(|arg| arg == "--dedicated").unwrap();
+        let resources = args.iter().position(|arg| arg == "--resources").unwrap();
+        assert!(resources < dedicated, "--resources must precede --dedicated");
         assert!(!args.iter().any(|arg| arg == crate::engine::INTERNAL_FLAG));
         assert!(args.contains(&"--nogui".to_owned()));
         assert!(args.contains(&"/srv/horizon/.horizon/resources/26.3".to_owned()));

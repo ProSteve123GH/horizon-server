@@ -198,6 +198,12 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — **first real tablet runtime evidence (owner)**: engine started on Android aarch64
+  (crash report `crash-2026-11-24_14.57.04-server.txt`, log lines `Horizon 0.1.0` then
+  `Horizon: resources is not a recognized option`). Root cause: upstream's launch parser stops at
+  `--dedicated` and routes later arguments to the dedicated-only parser, which rejects `--resources`.
+  Fix: pass global `--resources <path>` **before** `--dedicated`; unit test asserts the ordering.
+  This is the first device result — it proves native startup, not a working server yet.
 - 2026-11-24 — **final engine-enabled ARM64 run 45333795229 GREEN**: host tests, host smoke test
   (`cargo run --locked --features engine -- --version`), cross-compile, no-mod graph audit, artifact
   audit/package and upload all passed (33m31s). Final artifact independently verified: exactly two
