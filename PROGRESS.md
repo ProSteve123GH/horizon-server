@@ -198,6 +198,11 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — batch platform-provider build: CI run 45390672728 **GREEN** after fixing crate-name
+  aliases (`mod_api`/`mod_points`). Host tests, engine-linked smoke test, cross-compile, no-mod
+  audit and packaging all passed. Artifact verified: ELF64/AArch64, 5,330,632 bytes, archive SHA-256
+  `48a57e6040af74b7cea1eeb0f50909c12c2b06f48371b35903fcb8b5cd0b37ec`, binary SHA-256
+  `ab2ebc61dc769288d155c6c4e8cc5d953d8c86b01d2f78498d1efef9af8814c0`. Awaiting owner retest.
 - 2026-11-24 — **fourth real tablet runtime evidence (owner)**: with accepted prepared data, the
   engine started and printed `Horizon 0.1.0`, then failed with `engine platform socket is not
   installed` (crash `crash-2026-11-24_19.20.23-server.txt`). Owner requested a single batch fix
