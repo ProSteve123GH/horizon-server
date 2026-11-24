@@ -198,6 +198,12 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — **sixth real tablet runtime evidence (owner)**: major progress — resources loaded
+  (35,723 block states, 1,658 items, 67 biomes), vanilla server startup logs appeared, port 25565
+  bound, level "world" preparation began; then failed with `world is already open in another
+  instance` from `save.rs::SessionLock::acquire` `try_lock()`, another unsupported Termux advisory
+  lock. Batch patch applied to all server-reachable file locks (world session, pack cache, mod
+  package locks) — see `vendor/horizon/SOURCE.md`. Rebuild pending.
 - 2026-11-24 — Android guest-stack rebuild: CI run 45404439310 **GREEN**. Artifact verified: ELF64/
   AArch64, 92,851,016 bytes, archive SHA-256
   `8c60f15e52d2187c495cdb109b0f4680d51da4bcb2ffb26c01d00cd3453ee857`, binary SHA-256

@@ -193,8 +193,12 @@ impl SessionLock {
             .create(true)
             .truncate(false)
             .open(world.join("session.lock"))?;
+        // horizon-server patch: Termux's filesystem does not support advisory locks.
+        #[cfg(not(target_os = "android"))]
         file.try_lock()
             .map_err(|_| format!("{} is already open in another instance", world.display()))?;
+        #[cfg(target_os = "android")]
+        let _ = &file;
         file.set_len(0)?;
         file.write_all(&[0x26, 0x03])?;
         file.flush()?;
@@ -211,6 +215,9 @@ impl SessionLock {
             Ok(file) => file,
             Err(e) => return e.kind() == std::io::ErrorKind::PermissionDenied,
         };
+        // horizon-server patch: no advisory locks on Termux, so never claim another instance.
+        #[cfg(target_os = "android")]
+        return false;
         match file.try_lock() {
             Err(fs::TryLockError::WouldBlock) => true,
             Err(_) => false,

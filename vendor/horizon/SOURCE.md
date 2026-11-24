@@ -264,3 +264,12 @@ A real tablet run (2026-11-24, `crash-2026-11-24_16.32.29-server.txt`) showed
 `could not open .../logs/latest.log: try_lock() not supported` on Termux's filesystem. Fifth minimal
 patch: in `crates/horizon-client-render/src/logging.rs::open_latest`, skip `try_lock()` on Android
 while still opening the `.lock` file for `Latest`. Desktop logging/locking is unchanged.
+
+A later tablet run reached world loading and failed with
+`<world> is already open in another instance` from `crates/horizon-client/src/save.rs::SessionLock
+::acquire`, the same unsupported-advisory-lock problem. Sixth batch patch (all gated to Android):
+skip `try_lock()` in `save.rs::SessionLock::acquire`, make `save.rs::is_locked` return false, skip the
+lock loop in `horizon-client-render/src/packs/cache.rs`, and skip file locks in
+`horizon-mod-package/src/locks.rs::locked` and `install_lock.rs`. The lock files are still created
+and the guards still carry/close them; only the unsupported OS lock call is omitted. Desktop
+behavior is unchanged.

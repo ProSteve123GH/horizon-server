@@ -115,15 +115,21 @@ fn acquire(home: &Path, blocking: bool) -> io::Result<Option<HomeLockGuard>> {
         .create(true)
         .truncate(false)
         .open(guard.path.join(".mod-browser.lock"))?;
-    if blocking {
-        file.lock()?;
-    } else {
-        match file.try_lock() {
-            Ok(()) => {}
-            Err(fs::TryLockError::WouldBlock) => return Ok(None),
-            Err(fs::TryLockError::Error(e)) => return Err(e),
+    // horizon-server patch: no advisory locks on Termux.
+    #[cfg(not(target_os = "android"))]
+    {
+        if blocking {
+            file.lock()?;
+        } else {
+            match file.try_lock() {
+                Ok(()) => {}
+                Err(fs::TryLockError::WouldBlock) => return Ok(None),
+                Err(fs::TryLockError::Error(e)) => return Err(e),
+            }
         }
     }
+    #[cfg(target_os = "android")]
+    let _ = blocking;
     reg.locks
         .lock()
         .unwrap_or_else(|e| e.into_inner())

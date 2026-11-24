@@ -40,10 +40,14 @@ impl Drop for Locked {
 }
 
 pub fn locked(file: File, mode: LockMode) -> Result<Locked, std::fs::TryLockError> {
+    // horizon-server patch: Termux does not support advisory locks; keep the file guard only.
+    #[cfg(not(target_os = "android"))]
     match mode {
         LockMode::Shared => file.try_lock_shared(),
         LockMode::Exclusive => file.try_lock(),
     }?;
+    #[cfg(target_os = "android")]
+    let _ = mode;
     Ok(Locked {
         file,
         release: Release::Unlock,

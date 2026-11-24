@@ -390,6 +390,8 @@ fn remove_unused(out: &Path) -> io::Result<()> {
     };
     let building = open(lock_path(out))?;
     let using = open(use_path(out))?;
+    // horizon-server patch: skip advisory locks on Android/Termux filesystems.
+    #[cfg(not(target_os = "android"))]
     for lock in [&building, &using] {
         match lock.try_lock() {
             Ok(()) => {}
@@ -397,6 +399,8 @@ fn remove_unused(out: &Path) -> io::Result<()> {
             Err(fs::TryLockError::Error(e)) => return Err(e),
         }
     }
+    #[cfg(target_os = "android")]
+    let _ = (&building, &using);
     // The marker first: a folder half deleted is never taken for a built one.
     match fs::remove_file(marker_path(out)) {
         Err(e) if e.kind() != io::ErrorKind::NotFound => return Err(e),
