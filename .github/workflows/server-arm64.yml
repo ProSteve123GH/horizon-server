@@ -67,6 +67,9 @@ jobs:
       - name: Host unit tests (locked dependencies)
         run: cargo test --locked
 
+      - name: Host smoke test with engine linked
+        run: cargo run --locked --features engine -- --version
+
       - name: Cross-compile the single ARM64 executable
         run: |
           NDK="$RUNNER_TEMP/ndk/android-ndk-r28c/toolchains/llvm/prebuilt/linux-x86_64/bin"
