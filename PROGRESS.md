@@ -182,3 +182,11 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
   outside the binary with zip-slip rejection and atomic finalization. Manifest is explicitly
   provisional because the engine manifest format is not integrated. Full suite after the change:
   **30 unit + 2 black-box integration tests passed, 0 failed**.
+- 2026-11-24 — `server.properties` defaults expanded to 50 keys verified directly from upstream
+  `horizon-server-files/src/properties.rs` at commit a02b2838 (e.g. `motd=A Minecraft Server`,
+  `level-type=minecraft:normal`, `white-list=true`, `max-world-size=29999984`); removed the invalid
+  `pvp` server-property key. Local test run in progress.
+- 2026-11-24 — owner-approved interim path recorded (`79a29b4`). Parallel work launched with
+  exclusive ownership: vendoring pinned upstream source (`vendor/**`), prepared-data verifier
+  (`src/prepared.rs`), and artifact audit/package scripts (`scripts/**`). Integration lead retains
+  `Cargo.toml`, `src/main.rs`, workflows and documentation.

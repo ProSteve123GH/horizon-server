@@ -8,20 +8,59 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
-/// Defaults for the small, unambiguous subset of vanilla 26.3 properties we own today.
-/// Additional keys are appended only when absent, so operator edits always win.
+/// Vanilla 26.3 defaults, verified from upstream `horizon-server-files/src/properties.rs` at commit
+/// a02b2838. Missing keys are appended; operator values are never overwritten.
 pub const MANAGED_DEFAULTS: &[(&str, &str)] = &[
-    ("motd", "A Horizon Server"),
-    ("server-port", "25565"),
-    ("max-players", "20"),
     ("online-mode", "true"),
+    ("prevent-proxy-connections", "false"),
+    ("server-ip", ""),
+    ("allow-flight", "false"),
+    ("motd", "A Minecraft Server"),
+    ("enable-code-of-conduct", "false"),
+    ("bug-report-link", ""),
+    ("force-gamemode", "false"),
+    ("enforce-whitelist", "false"),
+    ("difficulty", "easy"),
+    ("gamemode", "survival"),
     ("level-name", "world"),
+    ("server-port", "25565"),
+    ("enable-query", "false"),
+    ("enable-rcon", "false"),
+    ("hardcore", "false"),
+    ("use-native-transport", "true"),
+    ("spawn-protection", "16"),
+    ("op-permission-level", "4"),
+    ("function-permission-level", "2"),
+    ("max-tick-time", "60000"),
+    ("max-chained-neighbor-updates", "1000000"),
+    ("rate-limit", "0"),
+    ("command-spam-threshold-seconds", "10"),
+    ("chat-spam-threshold-seconds", "10"),
     ("view-distance", "10"),
     ("simulation-distance", "10"),
-    ("gamemode", "survival"),
-    ("difficulty", "easy"),
-    ("pvp", "true"),
-    ("spawn-protection", "16"),
+    ("max-players", "20"),
+    ("network-compression-threshold", "256"),
+    ("broadcast-rcon-to-ops", "true"),
+    ("broadcast-console-to-ops", "true"),
+    ("max-world-size", "29999984"),
+    ("sync-chunk-writes", "true"),
+    ("region-file-compression", "deflate"),
+    ("enable-jmx-monitoring", "false"),
+    ("enable-status", "true"),
+    ("hide-online-players", "false"),
+    ("text-filtering-config", ""),
+    ("text-filtering-version", "0"),
+    ("player-idle-timeout", "0"),
+    ("status-heartbeat-interval", "0"),
+    ("white-list", "true"),
+    ("enforce-secure-profile", "true"),
+    ("log-ips", "true"),
+    ("pause-when-empty-seconds", "60"),
+    ("accepts-transfers", "false"),
+    ("level-seed", ""),
+    ("generate-structures", "true"),
+    ("level-type", "minecraft:normal"),
+    ("resource-pack-id", ""),
 ];
 
 #[derive(Clone, Debug)]
@@ -169,7 +208,8 @@ mod tests {
         properties.ensure_defaults();
         assert_eq!(properties.get("server-port"), Some("30000"));
         assert_eq!(properties.get("my-own-setting"), Some("1"));
-        assert_eq!(properties.get("motd"), Some("A Horizon Server"));
+        assert_eq!(properties.get("motd"), Some("A Minecraft Server"));
+        assert_eq!(properties.get("level-type"), Some("minecraft:normal"));
     }
 
     #[test]
