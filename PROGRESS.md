@@ -27,7 +27,7 @@ been started beyond repository setup and this investigation.
 | Host resources | `free -m` → ~32 GB RAM; `df -h /` → ~321 GB free; `nproc` → 8 | OK |
 | Rust toolchain | `command -v cargo rustc rustup` → all MISSING | BLOCKER |
 | Android NDK / clang | `command -v ndk-build clang` → MISSING; no Android env vars | BLOCKER |
-| Tablet access | `command -v adb` → MISSING; `/dev` has no USB/tty device | BLOCKER (under investigation) |
+| Tablet access | Research agent: no `adb`, no `/dev/bus/usb`, no Android mounts, ports 5037/5555/8022 closed, no Termux host/credentials in docs/scripts/history. Gateway `:22` is a Linux SSH host, not Android. | BLOCKED — owner must supply access |
 | Android build checkout | `/root/horizon-android-build` absent; owner clarified `/root/horizon-android-old` is the local source **and** build/tooling tree | RESOLVED |
 | Mojang files in repo | `git ls-files` → only `.gitignore`, `AGENTS.md`, `README.md`, `TASK.md` | OK |
 
@@ -77,3 +77,14 @@ validation policy are established in local-only `DEV.md`.
 - 2026-11-24 — owner clarification: `/root/horizon-android-build` is not a separate checkout; the
   local Android source and build/tooling tree is `/root/horizon-android-old`. Repository docs
   updated accordingly; no second tree will be assumed.
+- 2026-11-24 — toolchain/device research: network reachable (`static.rust-lang.org`, `dl.google.com`,
+  `sh.rustup.rs` all HTTP 200), ~321 GB disk and 32 GB RAM available. Fork pins Rust 1.95,
+  `aarch64-linux-android`, NDK 28.2.13676358, android-36. No tablet access path exists in this
+  environment, so all real-device acceptance items remain blocked.
+- 2026-11-24 — build pipeline research: fork's native server build recipe identified
+  (`cargo build -p horizon-client --no-default-features` + `-p horizon-server`, Dockerfile), NDK env
+  vars and Rust-only resource pipeline (`official_install.rs`, `android_resources.rs::rebuild`).
+  Version discrepancy found: fork branch `dev/26.4` pins `26.4-snapshot-10` while canonical upstream
+  and `TASK.md` require `26.3`; upstream 26.3 is authoritative for this product.
+- 2026-11-24 — toolchain provisioning started in background: rustup 1.95.0 with
+  `aarch64-linux-android` target, NDK r28b zip download. Not yet complete/verified.
