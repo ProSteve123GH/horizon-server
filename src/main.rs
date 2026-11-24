@@ -11,6 +11,7 @@ mod engine;
 mod eula;
 mod player_lists;
 mod server_dir;
+mod supervisor;
 
 use std::env;
 use std::io::{self, IsTerminal};
@@ -187,11 +188,13 @@ fn run(args: &[String], injected_answer: Option<&str>) -> i32 {
         return 0;
     }
 
-    eprintln!(
-        "horizon-server: resource bootstrap and headless engine are not integrated yet; \
-         refusing to claim the server is running"
-    );
-    2
+    match supervisor::run_engine(&dir) {
+        Ok(code) => code,
+        Err(error) => {
+            eprintln!("horizon-server: supervisor: {error}");
+            2
+        }
+    }
 }
 
 fn main() {

@@ -149,6 +149,12 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — full local suite after datapack addition: `cargo test` → **26 passed, 0 failed**
   (includes directory/ZIP datapack, player-list, server-dir and EULA tests). Module-level evidence
   only; no runtime/tablet claims.
-- 2026-11-24 — owner clarified the real environment: Linux x86_64 proot inside a Pterodactyl server
-  (3 vCPU, 2.5 GiB RAM, 10 GiB disk quota; `df -h` misleading), no adb, tablet testing is owner-run.
-  `TABLET_TEST_PLAN.md` added as the handoff procedure; local heavy builds stopped.
+- 2026-11-24 — owner clarified the real environment: Linux x86_64 proot inside a GuppyNodes free
+  Pterodactyl server (3 vCPU, 2.5 GiB RAM, 10 GiB disk; `df -h` misleading), no adb, tablet testing
+  is owner-run. `TABLET_TEST_PLAN.md` added as the handoff procedure; local heavy builds stopped.
+- 2026-11-24 — same-executable self-spawn boundary implemented (`src/supervisor.rs`): child command
+  always uses `current_exe()`, internal flag is first, no setup in internal mode. Full suite:
+  **28 unit tests + 2 black-box integration tests passed, 0 failed**. The child still reports the
+  engine placeholder error — no simulation is claimed.
+- 2026-11-24 — `DECISIONS_NEEDED.md` created with the three unresolved choices (headless boundary,
+  prepared-table source, tablet evidence) so the owner can unblock the remaining implementation.
