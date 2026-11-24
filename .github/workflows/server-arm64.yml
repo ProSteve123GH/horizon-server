@@ -31,14 +31,28 @@ jobs:
                 --no-modify-path --target "$ANDROID_TARGET"
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
+      # Cache compiled crates and the NDK so rebuilds only recompile this repository's code.
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: arm64-cli-${{ env.RUST_TOOLCHAIN }}
+
+      - name: Cache pinned Android NDK
+        id: cache-ndk
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/ndk
+          key: ndk-${{ env.NDK_REVISION }}-linux
+
       - name: Install pinned Android NDK
+        if: steps.cache-ndk.outputs.cache-hit != 'true'
         run: |
           curl -fL --retry 3 -o "$RUNNER_TEMP/$NDK_ZIP" \
             "https://dl.google.com/android/repository/$NDK_ZIP"
           unzip -q "$RUNNER_TEMP/$NDK_ZIP" -d "$RUNNER_TEMP/ndk"
-          test -f "$RUNNER_TEMP/ndk/android-ndk-r28c/source.properties"
-          grep -q "Pkg.Revision = $NDK_REVISION" \
-            "$RUNNER_TEMP/ndk/android-ndk-r28c/source.properties"
+
+      - name: Verify NDK revision
+        run: grep -q "Pkg.Revision = $NDK_REVISION" \
+          "$RUNNER_TEMP/ndk/android-ndk-r28c/source.properties"
 
       - name: Host unit tests (locked dependencies)
         run: cargo test --locked

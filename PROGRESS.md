@@ -158,3 +158,11 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
   engine placeholder error — no simulation is claimed.
 - 2026-11-24 — `DECISIONS_NEEDED.md` created with the three unresolved choices (headless boundary,
   prepared-table source, tablet evidence) so the owner can unblock the remaining implementation.
+- 2026-11-24 — CI build caching added per owner request: `Swatinem/rust-cache@v2` for compiled crates
+  and `actions/cache@v4` for the pinned NDK, so repeat runs only rebuild this repository's code.
+  Local `target/` is retained (never `cargo clean`ed) for the same reason.
+- 2026-11-24 — resource staging added: verified client JAR entries under `data/`,
+  `assets/minecraft/font/` and `assets/minecraft/textures/` are copied into a versioned directory
+  outside the binary with zip-slip rejection and atomic finalization. Manifest is explicitly
+  provisional because the engine manifest format is not integrated. Full suite after the change:
+  **30 unit + 2 black-box integration tests passed, 0 failed**.

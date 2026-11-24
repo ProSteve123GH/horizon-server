@@ -9,8 +9,9 @@ use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sha1::{Digest, Sha1};
+use zip::ZipArchive;
 
 /// Pins from canonical upstream `research-lock.json` (Minecraft 26.3), not the Android fork's
 /// `dev/26.4` snapshot pins.
@@ -33,6 +34,7 @@ pub const ACCEPTED_MANIFEST_SHA1: &[&str] = &[
 
 const MAX_METADATA_BYTES: u64 = 16 * 1024 * 1024;
 const MAX_ARTIFACT_BYTES: u64 = 512 * 1024 * 1024;
+const MAX_STAGED_BYTES: u64 = 512 * 1024 * 1024;
 
 #[derive(Debug)]
 pub enum BootstrapError {
@@ -43,6 +45,8 @@ pub enum BootstrapError {
     HashMismatch { url: String, expected: String, actual: String },
     OfflineCacheMissing(PathBuf),
     Json(String),
+    UnsafeArchivePath(String),
+    TooLargeStaged,
 }
 
 impl std::fmt::Display for BootstrapError {
@@ -60,6 +64,8 @@ impl std::fmt::Display for BootstrapError {
                 write!(formatter, "offline mode and no verified cache at {}", path.display())
             }
             Self::Json(error) => write!(formatter, "invalid Mojang metadata: {error}"),
+            Self::UnsafeArchivePath(name) => write!(formatter, "unsafe archive path: {name}"),
+            Self::TooLargeStaged => write!(formatter, "staged resources exceed {MAX_STAGED_BYTES} bytes"),
         }
     }
 }
@@ -259,6 +265,96 @@ impl Bootstrap {
         write_atomically(&path, &bytes)?;
         Ok(path)
     }
+
+    /// Resource directory, always inside the server directory and outside the executable.
+    pub fn resource_dir(&self) -> PathBuf {
+        self.cache_dir
+            .parent()
+            .unwrap_or(&self.cache_dir)
+            .join("resources")
+            .join(VERSION)
+    }
+
+    /// Stage engine-relevant entries from the verified client JAR into a versioned resource dir.
+    /// Entries are never extracted from untrusted paths, and the result is finalized atomically.
+    pub fn stage_client_resources(&self, jar_path: &Path) -> Result<PathBuf, BootstrapError> {
+        let final_dir = self.resource_dir();
+        let staging = final_dir.with_file_name(format!("{VERSION}.partial"));
+        if staging.exists() {
+            fs::remove_dir_all(&staging)?;
+        }
+        fs::create_dir_all(&staging)?;
+
+        let mut archive = ZipArchive::new(fs::File::open(jar_path)?)
+            .map_err(|error| BootstrapError::Json(format!("invalid client JAR: {error}")))?;
+        let mut files = 0usize;
+        let mut bytes = 0u64;
+        for index in 0..archive.len() {
+            let mut entry = archive
+                .by_index(index)
+                .map_err(|error| BootstrapError::Json(format!("cannot read JAR entry: {error}")))?;
+            let name = entry
+                .name()
+                .map_err(|error| BootstrapError::Json(format!("invalid JAR entry name: {error}")))?
+                .into_owned();
+            let wanted = name.starts_with("data/")
+                || name.starts_with("assets/minecraft/font/")
+                || name.starts_with("assets/minecraft/textures/");
+            if !wanted || entry.is_dir() {
+                continue;
+            }
+            let safe = safe_entry_path(&name)?;
+            let target = staging.join(safe);
+            if let Some(parent) = target.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            let mut writer = fs::File::create(&target)?;
+            bytes += io::copy(&mut entry, &mut writer)?;
+            files += 1;
+            if bytes > MAX_STAGED_BYTES {
+                return Err(BootstrapError::TooLargeStaged);
+            }
+        }
+
+        let manifest = StagedManifest {
+            version: VERSION,
+            client_sha1: CLIENT_SHA1,
+            files,
+            bytes,
+            note: "provisional: engine manifest format and prepared tables are not integrated yet",
+        };
+        let text = serde_json::to_string_pretty(&manifest)
+            .map_err(|error| BootstrapError::Json(error.to_string()))?;
+        fs::write(staging.join("bootstrap-manifest.json"), format!("{text}\n"))?;
+
+        if final_dir.exists() {
+            let previous = final_dir.with_file_name(format!("{VERSION}.previous"));
+            let _ = fs::remove_dir_all(&previous);
+            fs::rename(&final_dir, &previous)?;
+        }
+        fs::rename(&staging, &final_dir)?;
+        Ok(final_dir)
+    }
+}
+
+#[derive(Debug, Serialize)]
+struct StagedManifest<'a> {
+    version: &'a str,
+    client_sha1: &'a str,
+    files: usize,
+    bytes: u64,
+    note: &'a str,
+}
+
+fn safe_entry_path(name: &str) -> Result<&str, BootstrapError> {
+    if name.starts_with('/')
+        || name.contains('\\')
+        || name.split('/').any(|part| part.is_empty() || part == "." || part == "..")
+    {
+        Err(BootstrapError::UnsafeArchivePath(name.to_owned()))
+    } else {
+        Ok(name)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -284,6 +380,9 @@ fn write_atomically(path: &Path, bytes: &[u8]) -> io::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::Write;
+    use zip::write::SimpleFileOptions;
+    use zip::ZipWriter;
 
     #[test]
     fn pins_match_the_canonical_upstream_version() {
@@ -328,6 +427,54 @@ mod tests {
             Err(BootstrapError::OfflineCacheMissing(_))
         ));
         assert!(dir.join("fixture.corrupt").exists());
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    fn synthetic_jar(dir: &Path, entries: &[(&str, &str)]) -> PathBuf {
+        let jar = dir.join("client.jar");
+        let mut writer = ZipWriter::new(fs::File::create(&jar).unwrap());
+        for (name, contents) in entries {
+            writer.start_file(*name, SimpleFileOptions::default()).unwrap();
+            writer.write_all(contents.as_bytes()).unwrap();
+        }
+        writer.finish().unwrap();
+        jar
+    }
+
+    #[test]
+    fn stages_engine_relevant_entries_outside_the_binary() {
+        let dir = std::env::temp_dir().join(format!("horizon-stage-test-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let jar = synthetic_jar(
+            &dir,
+            &[
+                ("data/minecraft/tags.json", "{}"),
+                ("assets/minecraft/font/default.json", "{}"),
+                ("assets/minecraft/sounds/step.ogg", "ignored"),
+            ],
+        );
+        let bootstrap = Bootstrap { version_json: vec![], cache_dir: dir.clone() };
+        let staged = bootstrap.stage_client_resources(&jar).unwrap();
+        assert!(staged.join("data/minecraft/tags.json").exists());
+        assert!(staged.join("assets/minecraft/font/default.json").exists());
+        assert!(!staged.join("assets/minecraft/sounds/step.ogg").exists());
+        let manifest = fs::read_to_string(staged.join("bootstrap-manifest.json")).unwrap();
+        assert!(manifest.contains("\"version\": \"26.3\""));
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn zip_slip_entries_are_rejected_before_extraction() {
+        let dir = std::env::temp_dir().join(format!("horizon-slip-test-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let jar = synthetic_jar(&dir, &[("data/../evil.txt", "bad")]);
+        let bootstrap = Bootstrap { version_json: vec![], cache_dir: dir.clone() };
+        assert!(matches!(
+            bootstrap.stage_client_resources(&jar),
+            Err(BootstrapError::UnsafeArchivePath(_))
+        ));
         fs::remove_dir_all(&dir).unwrap();
     }
 }

@@ -118,6 +118,10 @@ fn run_bootstrap(dir: &Path, args: &[String]) -> Result<(), String> {
         .artifact("client.jar", &client, offline)
         .map_err(|error| error.to_string())?;
     println!("Client JAR verified and cached at {}", path.display());
+    let staged = bootstrap
+        .stage_client_resources(&path)
+        .map_err(|error| error.to_string())?;
+    println!("Engine resources staged at {}", staged.display());
     Ok(())
 }
 
