@@ -72,11 +72,30 @@ format; honour `level.dat` enabled/disabled lists and priority; load before worl
 implement `/datapack list|enable|disable` and `/reload` atomically. Test with real 26.3-format
 packs and a vanilla client. No mod/code-mod/WASM/plugin runtime anywhere in the build graph.
 
-## Dependency boundaries (TBD)
+## Dependency boundaries (source-mapping findings, 2026-11-24)
 
-Pending source-mapping research: exact crate list and feature edges for the headless graph; the
-smallest reusable engine boundary; how to avoid copying gameplay logic; Android NDK cross-compile
-configuration; whether the existing dedicated path can be compiled without WGPU/winit/audio/JNI.
+- There is **no existing headless server crate** to reuse. The dedicated server is the game run with
+  `--dedicated`: upstream `crates/horizon-client/src/game/interface/dedicated/mod.rs` (~3,272 lines)
+  plus seven siblings; the Android fork has a structurally different `game/dedicated.rs` (~3,043
+  lines, ~846-line diff). Do not blindly merge them — upstream 26.3 is authoritative.
+- `crates/horizon-server` is only a supervisor: it spawns `horizon-engine`/`horizon-client` as a
+  separate process (`horizon-server-launch/src/lib.rs:19`). Same-executable dispatch is new work.
+- **wgpu/winit are unconditional** in `horizon-client`, `horizon-client-render`,
+  `horizon-client-lib` and `horizon-client-input`; `--no-default-features` removes only
+  audio/controllers/extras. Upstream `docs/server.md:419-428` explicitly defers a true headless
+  engine. The Android fork additionally gates the mod/WASM runtime behind `mods` (off by default),
+  which is the pattern to adopt for the no-mods guarantee.
+- The smallest portable crate set is `horizon-core`, `horizon-world`, `horizon-protocol`,
+  `horizon-items`, `horizon-command`, `horizon-client-core`, `horizon-assets`, `horizon-threads`,
+  `horizon-guest-stack`, `horizon-java-properties`, `horizon-server-files` and
+  `horizon-server-launch`. `horizon-gameplay` still reaches `horizon-client-lib` (and therefore
+  wgpu/winit), so extracting the dedicated loop is a large porting task, not a build flag.
+- No pure-Rust generator exists for the prepared data tables; both trees rely on JDK exporters or
+  a bundled `engine-data.zip`. This blocks the "binary prepares everything itself" requirement
+  without an owner decision (see `PROGRESS.md`).
+- Build tooling pinned by the fork: Rust 1.95.0, NDK revision `28.2.13676358` (package **r28c**,
+  verified — r28b is 28.1.13356709), minSdk 28, target `aarch64-linux-android`, clang/linker env
+  vars recorded in local `DEV.md`. APK/Gradle/JNI paths are excluded for the server CLI.
 
 ## Target staging
 

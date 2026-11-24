@@ -36,6 +36,29 @@ The inherited `/root/horizon-android-old/LOCAL_ENVIRONMENT.md` describes the *ol
 8 CPUs); that note's no-local-build rule is retained as a safety default until a local toolchain and
 validation policy are established in local-only `DEV.md`.
 
+## Hard blockers requiring owner decisions (do not mark as resolved)
+
+1. **No Android tablet access path exists in this environment.** Evidence: no `adb`, no
+   `/dev/bus/usb`, no Android mounts, TCP 5037/5555/8022 closed, no Termux SSH host/IP/credentials
+   in docs/scripts/history. Owner must provide a device connection or run the acceptance steps on
+   the tablet and return logs. Until then M1.3–M1.8 cannot be validated and must stay unchecked.
+2. **A truly headless engine (no wgpu/winit) does not exist upstream.** Evidence: upstream
+   `crates/horizon-client/Cargo.toml:63-64`, `horizon-client-render/Cargo.toml:66-67`,
+   `horizon-client-lib/Cargo.toml:62-63`, `horizon-client-input/Cargo.toml:14` make them
+   unconditional; `docs/server.md:419-428` calls this future work after perf-ticks-2. 97 source
+   files use `winit::keyboard::KeyCode`. This is a multi-week refactor, not a feature flag.
+   Owner decision needed: fund that refactor, or approve a documented interim deviation.
+3. **No pure-Rust generator exists for the prepared tables** (`facts.json`, `registries.json`,
+   `commands.json`, etc.). Evidence: Android `official_install.rs:582` extracts a bundled
+   `engine-data.zip` made by the JDK preparer; upstream `crates/horizon-prepare/src/lib.rs:1-6`
+   runs Java exporters. TASK.md §2.3 requires Rust-only runtime preparation. Owner decision
+   needed: authorise a signed generated-table bundle from an owner-controlled endpoint or an
+   operator-supplied one-time prepared folder, or fund implementation of the generators.
+4. **Android CLI + winit is unproven** because winit's Android backend expects `android_main()` /
+   `AndroidApp` (Android fork `third_party/winit/src/event_loop.rs:101`), not a Termux CLI.
+
+None of these blockers is resolved. No acceptance criterion has been weakened.
+
 ## Milestone-one acceptance checklist (TASK.md §0, §8 — Android ARM64 subset)
 
 - [~] M1.1 `aarch64-linux-android` cross-compilation succeeds with pinned NDK/Rust toolchain; exact
@@ -93,5 +116,22 @@ validation policy are established in local-only `DEV.md`.
   explicit EULA acceptance, internal-mode guard) with **12/12 host unit tests passing**
   (`cargo test` output: `test result: ok. 12 passed; 0 failed`).
 - 2026-11-24 — cross-compile verified: `cargo build --release --target aarch64-linux-android`
-  with NDK 28.2.13676358 clang/linker produced a 342 KB ELF; `llvm-readelf -h` → `Class: ELF64`,
-  `Machine: AArch64`. This is the CLI skeleton only, not an integrated server binary.
+  with NDK clang/linker produced a 342 KB ELF; `llvm-readelf -h` → `Class: ELF64`, `Machine:
+  AArch64`. This is the CLI skeleton only, not an integrated server binary.
+- 2026-11-24 — NDK revision correction: the `android-ndk-r28b-linux.zip` package reports
+  `Pkg.Revision = 28.1.13356709`; the fork's pinned `28.2.13676358` is `r28c`
+  (`android-ndk-r28c-linux.zip`, verified from `source.properties`). CI workflow corrected to r28c.
+- 2026-11-24 — source-mapping research completed: no existing headless server crate; dedicated
+  logic lives in `game/interface/dedicated/mod.rs` (~3,272 lines upstream) and needs extraction;
+  no pure-Rust prepared-table generator exists. Details in `ARCHITECTURE.md` and blockers above.
+- 2026-11-24 — resource-bootstrap core added (pinned 26.3 metadata, official-host allowlist,
+  SHA-1/size checks, atomic cache, offline reuse). Host test run at that point: **15 passed, 1
+  failed** (`corrupt_cache...` asserted the wrong temporary filename); the assertion was corrected
+  to `fixture.corrupt` but **not re-run** after the owner asked to stop testing due to a storage
+  incident. Do not claim 16/16.
+- 2026-11-24 — workspace restart removed the extracted NDK and rustup toolchain; the large NDK
+  zips and build directories created here were deleted to free storage. No builds/tests are being
+  run while the storage incident is unresolved.
+- 2026-11-24 — `/root/horizon-android-old/LOCAL_ENVIRONMENT.md` respected: no build, test, game or
+  launcher was ever run in that workspace; all compilation happened in the new repo with a freshly
+  installed toolchain. No emulator, cross-compile or host result is claimed as tablet validation.

@@ -4,6 +4,7 @@
 //! linked yet; see `PROGRESS.md`. This binary must never be presented as a working server until the
 //! engine and bootstrap milestones are complete.
 
+mod bootstrap;
 mod config;
 mod eula;
 mod engine;
@@ -21,12 +22,14 @@ fn help_text() -> &'static str {
      Usage:\n\
        horizon-server [options]                 Start in the foreground (default)\n\
        horizon-server init                      Explicit first-run setup only\n\
+       horizon-server bootstrap                 Verify/fetch pinned game resources\n\
        horizon-server --help                    Show this help without network access\n\
        horizon-server --version                 Print server and Minecraft versions\n\
      \n\
      Options:\n\
        --dir <path>          Server directory (default: current working directory)\n\
        --accept-eula         Explicitly accept the EULA for non-interactive setup\n\
+       --offline             Require already-verified cached resources (no network)\n\
      \n\
      The Minecraft EULA must be accepted explicitly: answer the terminal prompt or set\n\
      --accept-eula after reading https://aka.ms/MinecraftEULA. No game files are bundled."
@@ -85,6 +88,27 @@ fn is_init(args: &[String]) -> bool {
     args.iter().any(|argument| argument == "init")
 }
 
+fn is_bootstrap(args: &[String]) -> bool {
+    args.iter().any(|argument| argument == "bootstrap")
+}
+
+fn run_bootstrap(dir: &Path, args: &[String]) -> Result<(), String> {
+    let offline = args.iter().any(|argument| argument == "--offline");
+    let bootstrap = bootstrap::Bootstrap::new(dir, offline).map_err(|error| error.to_string())?;
+    let (client, server) = bootstrap.artifacts().map_err(|error| error.to_string())?;
+    println!(
+        "Verified pinned Minecraft {} metadata (client SHA-1 {}, server SHA-1 {}).",
+        bootstrap::VERSION, client.sha1, server.sha1
+    );
+    // The proven Android path uses the client JAR plus asset objects; the server JAR is verified
+    // here but not downloaded until the headless engine audit confirms it is required.
+    let path = bootstrap
+        .artifact("client.jar", &client, offline)
+        .map_err(|error| error.to_string())?;
+    println!("Client JAR verified and cached at {}", path.display());
+    Ok(())
+}
+
 /// Returns a process exit code. Kept separate from `main` so the CLI can be exercised in tests.
 fn run(args: &[String], injected_answer: Option<&str>) -> i32 {
     if engine::is_internal_invocation(args) {
@@ -121,6 +145,15 @@ fn run(args: &[String], injected_answer: Option<&str>) -> i32 {
 
     if is_init(args) {
         println!("First-run setup complete for {}.", dir.display());
+        return 0;
+    }
+
+    if let Err(error) = run_bootstrap(&dir, args) {
+        eprintln!("horizon-server: bootstrap: {error}");
+        return 2;
+    }
+    if is_bootstrap(args) {
+        println!("Resource bootstrap verified.");
         return 0;
     }
 
