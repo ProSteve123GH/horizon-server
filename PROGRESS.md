@@ -198,6 +198,10 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — final resource-path rebuild: CI run 45373570095 **GREEN**. Artifact verified: ELF64/
+  AArch64, 91,579,592 bytes. Archive SHA-256
+  `94ca8d75cfdeac73c83283d857f6bc3a602e54a2bdaf2e474e8d8f26ead2585a`; binary SHA-256
+  `2c509371578ccae03987533e7cb750511542fafc00784bb0c3c18a9aac7de911`. Awaiting owner retest.
 - 2026-11-24 — **third real tablet runtime evidence (owner)**: `prepare --prepared-bundle` succeeded
   (`Accepted prepared data at .../.horizon/prepared/26.3`) and the engine started, but still reported
   `no horizon-resources.json in .../.horizon/resources/26.3`. Cause: the supervisor hard-coded the
