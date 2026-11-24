@@ -1,6 +1,6 @@
 [package]
 name = "horizon-server"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2024"
 rust-version = "1.95"
 description = "Standalone, single-executable vanilla-compatible Minecraft 26.3 dedicated server"

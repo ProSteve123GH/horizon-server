@@ -98,15 +98,29 @@ jobs:
           done
           echo "verified: shipped ARM64 graph excludes wasmtime/mod-host/mod-wasm"
 
-      - name: Audit and package the single ARM64 artifact
+      - name: Audit raw binary and package dev tarball
         run: |
           mkdir -p release
+          # Release assets use the raw executable plus a checksum, no nested archives.
+          install -m 0755 "target/$ANDROID_TARGET/release/horizon-server" \
+            "release/horizon-server-aarch64-linux-android"
+          ( cd release && sha256sum horizon-server-aarch64-linux-android \
+              > horizon-server-aarch64-linux-android.sha256 )
+          # Dev artifact keeps the audited tarball (with its internal checksum).
           bash scripts/package_arm64.sh \
             "target/$ANDROID_TARGET/release/horizon-server" "$PWD/release"
           tar -tzf release/horizon-server-aarch64-linux-android.tar.gz
 
       - uses: actions/upload-artifact@v4
         with:
-          name: horizon-server-aarch64-linux-android
+          name: horizon-server-aarch64-linux-android-raw
+          path: |
+            release/horizon-server-aarch64-linux-android
+            release/horizon-server-aarch64-linux-android.sha256
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: horizon-server-aarch64-linux-android-dev
           path: release/horizon-server-aarch64-linux-android.tar.gz
           if-no-files-found: error

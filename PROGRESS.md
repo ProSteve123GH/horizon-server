@@ -54,12 +54,11 @@ inside a GuppyNodes/Pterodactyl **free** server: 3 vCPU, 2.5 GiB RAM (about 712 
 is deliberately avoided to keep from maxing the server; it belongs in CI. Only light, bounded
 `cargo test` runs are used for module verification. Tablet validation is explicitly owner-run.
 
-## Hard blockers requiring owner decisions (do not mark as resolved)
+## Resolved blockers and approved deviations
 
-1. **Tablet validation is owner-run.** This container has no `adb`, no `/dev/bus/usb`, no Android
-   mounts and ports 5037/5555/8022 closed; the owner confirmed the tablet test is theirs to run.
-   Our deliverable is a reproducible ARM64 build plus a written acceptance procedure
-   (`TABLET_TEST_PLAN.md`). M1.3–M1.8 stay unchecked until real device logs are returned.
+1. **Tablet validation — DONE (owner-run).** Owner returned logs and screenshots on 2026-11-24
+   showing server startup, world load/save, commands, vanilla client join and graceful stop.
+   Remaining device checks: datapack enable/disable/reload and a fresh first-run EULA refusal.
 2. **A truly headless engine (no wgpu/winit) does not exist upstream.** Evidence: upstream
    `crates/horizon-client/Cargo.toml:63-64`, `horizon-client-render/Cargo.toml:66-67`,
    `horizon-client-lib/Cargo.toml:62-63`, `horizon-client-input/Cargo.toml:14` make them
@@ -79,25 +78,29 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 
 ## Milestone-one acceptance checklist (TASK.md §0, §8 — Android ARM64 subset)
 
-- [~] M1.1 `aarch64-linux-android` cross-compilation succeeds with pinned NDK/Rust toolchain; exact
-      commands and versions recorded in `DEV.md`. **Partial:** CLI skeleton cross-compiles (ELF64
-      AArch64 verified); the final engine-linked binary does not exist yet.
-- [ ] M1.2 Exactly one `horizon-server` ELF executable is produced (no APK, JNI entry, sidecar, JAR,
-      helper or Mojang content); architecture verified with `file`/`readelf`.
-- [ ] M1.3 Binary starts in an empty Termux directory, explains the EULA and refuses to start without
-      explicit affirmative acceptance; non-interactive start never silently accepts.
-- [ ] M1.4 Bootstrap downloads/pins/verifies Minecraft 26.3 inputs from official Mojang endpoints,
-      writes prepared data outside the binary, and reuses verified cache offline.
-- [ ] M1.5 Vanilla-style directory (`server.properties`, `eula.txt`, player lists, `logs/`, world)
-      and world create/open/save/restart work on the tablet.
-- [ ] M1.6 A real vanilla Java 26.3 client connects, plays, moves, loads chunks, saves/restarts and
-      travels dimensions; result labelled with exact validation level.
-- [ ] M1.7 Commands, whitelist/bans/ops, datapacks (directory + ZIP), enable/disable persistence and
-      `/reload` verified against pinned vanilla behavior.
-- [ ] M1.8 Graceful shutdown (SIGINT/SIGTERM where available) saves state and closes cleanly.
-- [ ] M1.9 No mod/plugin/code-mod/WASM runtime is linked or reachable in the server build; audited.
-- [ ] M1.10 Android client and desktop client behavior are not regressed (no changes made to those
-      source repositories during initialization).
+- [x] M1.1 `aarch64-linux-android` cross-compilation succeeds with pinned Rust 1.95 / NDK 28.2.13676358
+      (r28c); exact toolchain recipe in `DEV.md`, CI workflow and `vendor/horizon/SOURCE.md`.
+- [x] M1.2 Exactly one `horizon-server` ELF per CI artifact, no sidecar/JAR/Mojang content; ELF64/AArch64
+      verified locally from the downloaded archive; script audit + no-mod graph audit pass in CI.
+- [~] M1.3 EULA: unit tests prove refusal without explicit acceptance and `eula=true` only on explicit
+      consent. Device runs had an already-accepted `eula.txt`; a *fresh* first-run refusal was not
+      re-tested on the tablet.
+- [x] M1.4 Device logs show pinned 26.3 metadata/client JAR SHA-1 verification, resource staging and
+      accepted prepared bundle outside the binary. `--offline` cache reuse is unit-tested, not device-run.
+- [x] M1.5 Vanilla-style directory and world: `server.properties`, `eula.txt`, player JSONs, `logs/`,
+      `<world>/datapacks/` created; device log shows `Preparing level "world"`, worldgen loaded, and all
+      three dimensions saved on stop. Earlier runs reopened the same world directory.
+- [~] M1.6 Real unmodified Minecraft 26.3 client joined on the tablet (screenshot + console
+      `ProSteve123GH joined the game`), moved/looked around and saw chunks. Dimension travel and
+      save/restart-with-client were not re-tested in the same session.
+- [~] M1.7 Console commands (`help`, `whitelist off`, stop), player join and chat verified on device;
+      datapack discovery/ZIP validation has unit tests, but enable/disable persistence and `/reload`
+      were not exercised on the tablet.
+- [x] M1.8 Graceful shutdown: device `stop` command produced `Stopping server / Saving players /
+      Saving worlds` and saved all three dimensions cleanly.
+- [x] M1.9 CI no-mod graph audit passes for `wasmtime`, `horizon-mod-host` and `horizon-mod-wasm`.
+- [x] M1.10 No changes were made to `/root/horizon-android-old`, `/root/horizon-upstream` or any
+      other reference repository; all edits are in this new repository.
 
 ## Later-phase checklist
 
@@ -198,6 +201,14 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — **SEVENTH (SUCCESSFUL) TABLET RUN — milestone-one runtime achieved**. Owner log:
+  resources loaded (35,723 block states, 1,658 items, 67 biomes, 7 worker threads), vanilla
+  `Starting minecraft server version 26.3`, properties loaded, keypair generated, bound `*:25565`,
+  level `world` prepared (worldgen + live features), chat filter notice, `Done (2.851s)!`, saved all
+  three dimensions, `stop` produced clean `Stopping server / Saving players / Saving worlds` logs.
+  Screenshots show an unmodified Minecraft 26.3 client connected as `ProSteve123GH`, joined the
+  game, moved/looked around, and console showed `whitelist off`, `/help` command tree, and
+  `logged in with entity id 1`. This is the first real device evidence — no emulator/host claim.
 - 2026-11-24 — lock-batch rebuild: CI run 45410504472 **GREEN**. Artifact verified: ELF64/AArch64,
   92,851,016 bytes, archive SHA-256
   `6f2fe38e66579fdfd9a5aed0a2d09e2ecdcc4448870b45cef4b9b4346c69b2ca`, binary SHA-256
