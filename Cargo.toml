@@ -13,7 +13,14 @@ path = "src/main.rs"
 [features]
 default = []
 # Opt-in until the CI engine-link check type-verifies the direct entry seam.
-engine = ["dep:horizon-client", "dep:horizon-mod-package"]
+engine = [
+    "dep:horizon-client",
+    "dep:horizon-mod-package",
+    "dep:horizon-engine-slots",
+    "dep:horizon-mod-api",
+    "dep:horizon-mod-points",
+    "dep:horizon-guest-stack",
+]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
@@ -24,6 +31,11 @@ zip = { version = "9.1.3", default-features = false, features = ["deflate"] }
 # Engine seam: direct client entry, never horizon-game (which pulls the mod host).
 horizon-client = { path = "vendor/horizon/crates/horizon-client", default-features = false, optional = true }
 horizon-mod-package = { path = "vendor/horizon/crates/horizon-mod-package", default-features = false, optional = true }
+# Pre-entry platform providers that upstream's mod host installs for us. None of these pull wasmtime.
+horizon-engine-slots = { path = "vendor/horizon/crates/horizon-engine-slots", optional = true }
+horizon-mod-api = { path = "vendor/horizon/crates/horizon-mod-api", optional = true }
+horizon-mod-points = { path = "vendor/horizon/crates/horizon-mod-points", optional = true }
+horizon-guest-stack = { path = "vendor/horizon/crates/horizon-guest-stack", optional = true }
 
 # Same patched third-party crates as pinned upstream 26.3.
 [patch.crates-io]

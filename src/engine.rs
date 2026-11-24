@@ -21,6 +21,26 @@ pub fn is_internal_invocation(args: &[String]) -> bool {
 fn run_engine_seam(_args: &[String]) -> Result<(), String> {
     // Direct dedicated-server entry, deliberately NOT horizon_game::main(): that function
     // unconditionally starts the mod host (wasmtime), which this product forbids.
+    //
+    // Upstream's mod host installs these set-once platform providers before entry::start().
+    // We install the same real callbacks (with an empty mod inventory), so the engine's
+    // platform(), point table and dispatch instrumentation are all initialized. This is the
+    // batch fix for the tablet's "engine platform socket is not installed" crash.
+    horizon_guest_stack::prepare_main();
+    let _ = horizon_engine_slots::install_seal(horizon_mod_points::__private::seal);
+    horizon_mod_api::__private::initialize()
+        .map_err(|reason| format!("mod platform initialization failed: {reason}"))?;
+    let _ = horizon_engine_slots::install_platform(horizon_engine_slots::Platform {
+        install_packages: horizon_mod_api::__private::install_packages,
+        install_registration_data: horizon_mod_api::__private::install_registration_data,
+        install_parts: horizon_mod_api::__private::install_parts,
+        profiler_is_enabled: horizon_mod_api::__private::profiler::is_enabled,
+        profiler_start: horizon_mod_api::__private::profiler::start,
+        profiler_stop: horizon_mod_api::__private::profiler::stop,
+        profiler_summary: horizon_mod_api::__private::profiler::summary,
+        profiler_firefox_profile: horizon_mod_api::__private::profiler::firefox_profile,
+    });
+
     let startup = horizon_client::entry::prepare();
     horizon_client::entry::start(
         horizon_mod_package::runtime::Runtime::default(),

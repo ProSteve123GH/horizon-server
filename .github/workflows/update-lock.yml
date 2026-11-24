@@ -1,0 +1,28 @@
+name: update-lock
+
+# Small helper: resolve Cargo.lock after Cargo.toml dependency changes without installing a
+# toolchain in the owner's small container. Download the artifact and commit it to the repo.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Rust toolchain
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+            | sh -s -- -y --default-toolchain 1.95.0 --profile minimal --no-modify-path
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - name: Resolve lockfile (no compilation)
+        run: cargo generate-lockfile
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Cargo.lock
+          path: Cargo.lock
+          if-no-files-found: error
