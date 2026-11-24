@@ -198,9 +198,14 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
-- 2026-11-24 — engine-link feasibility spike launched under `experiments/engine-link/` (isolated
-  ownership) to determine whether the dedicated engine can be entered without the mod/wasmtime
-  runtime. No main-binary changes until it reports.
+- 2026-11-24 — engine-link feasibility spike result: a standalone crate can call
+  `horizon_client::entry::prepare()` + `entry::start()` with an empty `Runtime::default()` and no-op
+  code hooks, reaching the real dedicated loop without `horizon_game::main()`. `cargo tree` on the
+  generated lockfile (497 packages) showed **no wasmtime, horizon-mod-host or horizon-mod-wasm**;
+  wgpu/winit/naga remain unconditional (owner-approved interim deviation). The local check exited 124
+  at the 10-minute timeout while compiling 496 dependencies, with no errors and before type-checking
+  the probe, so the API calls are **not yet type-verified**. CI workflow `engine-link.yml` added with
+  a 45-minute timeout to verify them on a hosted runner.
 - 2026-11-24 — asset-index verification added: 8 accepted 26.3 hashes from upstream
   `research-lock.json`, official-host check, size/hash verification, corrupt-cache repair and offline
   reuse. Full suite: **41 unit + 3 integration tests passed, 0 failed**.

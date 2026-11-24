@@ -1,0 +1,24 @@
+# Standalone feasibility probe. NOT part of the root server workspace.
+# Path dependencies point into the vendored, tracked upstream 26.3 tree.
+[package]
+name = "engine-link-probe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dependencies]
+# The dedicated engine IS horizon-client built with --no-default-features upstream
+# (released as `horizon-engine`; docs/server.md, .github/workflows/game-build.yml:479).
+# We deliberately do NOT depend on horizon-game or horizon-mod-host.
+horizon-client = { path = "../../vendor/horizon/crates/horizon-client", default-features = false }
+# Only needed to name Runtime/LaunchArguments for the no-mod entry::start() call below.
+# Same path upstream uses, so the type identity matches horizon-client's copy.
+horizon-mod-package = { path = "../../vendor/horizon/crates/horizon-mod-package", default-features = false }
+
+# Upstream's [patch.crates-io] entries, rebased to be relative to THIS manifest.
+[patch.crates-io]
+wgpu-hal = { path = "../../vendor/horizon/third_party/wgpu-hal" }
+naga = { path = "../../vendor/horizon/third_party/naga" }
+libmimalloc-sys = { path = "../../vendor/horizon/third_party/libmimalloc-sys" }

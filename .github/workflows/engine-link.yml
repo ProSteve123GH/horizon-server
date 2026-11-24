@@ -1,0 +1,52 @@
+name: engine-link
+
+# Verification for the isolated engine-link spike. GitHub runners have more headroom than the
+# owner's free Pterodactyl container, so the full upstream dependency graph is checked here.
+
+on:
+  push:
+    branches: [server]
+  pull_request:
+    branches: [server]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  RUST_TOOLCHAIN: 1.95.0
+
+jobs:
+  check-entry-seam:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pinned Rust toolchain
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+            | sh -s -- -y --default-toolchain "$RUST_TOOLCHAIN" --profile minimal --no-modify-path
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: experiments/engine-link -> experiments/engine-link/target
+          key: engine-link-${{ env.RUST_TOOLCHAIN }}
+
+      - name: Type-check the no-mod engine entry
+        working-directory: experiments/engine-link
+        env:
+          CARGO_BUILD_JOBS: 2
+        run: cargo check --locked
+
+      - name: Audit that no mod runtime entered the graph
+        working-directory: experiments/engine-link
+        run: |
+          for crate in wasmtime horizon-mod-host horizon-mod-wasm; do
+            if cargo tree -i "$crate" >/dev/null 2>&1; then
+              echo "::error::forbidden mod runtime in engine graph: $crate"
+              exit 1
+            fi
+          done
+          echo "verified: no wasmtime/horizon-mod-host/horizon-mod-wasm in the entry graph"
