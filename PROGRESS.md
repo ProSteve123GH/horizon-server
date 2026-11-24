@@ -198,6 +198,10 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — Android guest-stack rebuild: CI run 45404439310 **GREEN**. Artifact verified: ELF64/
+  AArch64, 92,851,016 bytes, archive SHA-256
+  `8c60f15e52d2187c495cdb109b0f4680d51da4bcb2ffb26c01d00cd3453ee857`, binary SHA-256
+  `610c38f1ecc0e70c34db90a5805943a32afb699af1175359a80001c9c19d0799`. Awaiting owner retest.
 - 2026-11-24 — **fifth real tablet runtime evidence (owner)**: platform providers initialized and
   the engine started, then `GuestStackUnavailable: stack inspection is unsupported on this
   platform`. Cause: the newly added `horizon_guest_stack::prepare_main()` cannot inspect stack limits

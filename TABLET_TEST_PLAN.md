@@ -6,8 +6,8 @@ passed.** The checklist items in `PROGRESS.md` stay unchecked until real device 
 
 > Current status: the ARM64 artifact from CI run 45344696712 contains the dedicated engine linked
 > through the no-mod entry seam (single ELF, 91,568,072 bytes, SHA-256
-> `ab2ebc61dc769288d155c6c4e8cc5d953d8c86b01d2f78498d1efef9af8814c0`, archive SHA-256
-> `48a57e6040af74b7cea1eeb0f50909c12c2b06f48371b35903fcb8b5cd0b37ec`; CI run 45390672728). It has
+> `610c38f1ecc0e70c34db90a5805943a32afb699af1175359a80001c9c19d0799`, archive SHA-256
+> `8c60f15e52d2187c495cdb109b0f4680d51da4bcb2ffb26c01d00cd3453ee857`; CI run 45404439310). It has
 > **not been run on a
 > tablet**, and no world/client/parity result exists yet. Use this plan as the acceptance procedure
 > and return the evidence listed at the end; steps that fail because prepared tables or runtime
