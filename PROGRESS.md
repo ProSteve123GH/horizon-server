@@ -190,6 +190,11 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
   Independently reviewed (pure Rust SHA-256, no new dependency, no `unsafe`, path/symlink hardening)
   and verified end-to-end with a synthetic manifest. Full suite: **40 unit + 3 black-box integration
   tests passed, 0 failed**.
+- 2026-11-24 — CI artifact handoff verified: downloaded run 45320154503 artifact
+  `horizon-server-aarch64-linux-android.tar.gz` (SHA-256
+  `392c37cbb74fdeaa80d4e11e79249ef133a2176b84858d5ac1d08385fc6db8cd`); archive contains exactly
+  `horizon-server` and `horizon-server.sha256`; ELF header bytes are ELF64 / machine 183 (AArch64).
+  This is the CLI skeleton build only — not a playable server.
 - 2026-11-24 — asset-index verification added: 8 accepted 26.3 hashes from upstream
   `research-lock.json`, official-host check, size/hash verification, corrupt-cache repair and offline
   reuse. Full suite: **41 unit + 3 integration tests passed, 0 failed**.
