@@ -195,6 +195,12 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
   `392c37cbb74fdeaa80d4e11e79249ef133a2176b84858d5ac1d08385fc6db8cd`); archive contains exactly
   `horizon-server` and `horizon-server.sha256`; ELF header bytes are ELF64 / machine 183 (AArch64).
   This is the CLI skeleton build only — not a playable server.
+- 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
+  (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
+  parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — engine-link feasibility spike launched under `experiments/engine-link/` (isolated
+  ownership) to determine whether the dedicated engine can be entered without the mod/wasmtime
+  runtime. No main-binary changes until it reports.
 - 2026-11-24 — asset-index verification added: 8 accepted 26.3 hashes from upstream
   `research-lock.json`, official-host check, size/hash verification, corrupt-cache repair and offline
   reuse. Full suite: **41 unit + 3 integration tests passed, 0 failed**.
