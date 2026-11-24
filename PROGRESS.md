@@ -190,6 +190,11 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
   Independently reviewed (pure Rust SHA-256, no new dependency, no `unsafe`, path/symlink hardening)
   and verified end-to-end with a synthetic manifest. Full suite: **40 unit + 3 black-box integration
   tests passed, 0 failed**.
+- 2026-11-24 — pinned upstream source snapshot vendored into `vendor/horizon/` (148 MB, 9,767 files)
+  from commit `a02b2838d34f4c99726cca349ec0b4d62c5c8fa5`; independently verified: no `.jar`,
+  `horizon-data.bin`, `engine-data.zip`, `.zip`, `.git`, `.local` or `target` files; version pins
+  confirmed (26.3 / protocol 777 / data-pack format 121). Provenance in `vendor/horizon/SOURCE.md`.
+  Binary source fixtures were pruned, so the snapshot is a reference tree, not yet a build tree.
 - 2026-11-24 — CI watcher/fixer subagent launched with sole ownership of `.github/workflows/**` after
   all `server-arm64` runs failed at "Verify NDK revision" (missing `source.properties` path).
 - 2026-11-24 — owner-approved interim path recorded (`79a29b4`). Parallel work launched with
