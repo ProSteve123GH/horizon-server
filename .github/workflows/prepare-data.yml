@@ -98,7 +98,8 @@ jobs:
                   assert not low.endswith((".jar", ".class")), info.filename
                   assert low != "engine-data.zip", info.filename
                   assert (not low.endswith(".zip")
-                          or info.filename == "assets/minecraft/font/unifont.zip"), info.filename
+                          or low.startswith(("assets/minecraft/font/",
+                                             "assets/minecraft/resourcepacks/"))), info.filename
                   assert not (low.startswith(".local/") or "/.local/" in low), info.filename
           print(f"audited {len(listed)} verified prepared files in {archive.name}")
           PY

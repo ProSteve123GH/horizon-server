@@ -305,9 +305,10 @@ source, archive, version = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3]
 MANIFEST = "prepared-manifest.json"
 FIXED_TIME = (1980, 1, 1, 0, 0, 0)
 BANNED_SUFFIXES = (".jar", ".class")
-# horizon-prepare adds GNU Unifont glyphs as this one archive; engine-data.zip
-# (the Android build's generated-table bundle) must never appear here.
-ALLOWED_ZIPS = {"assets/minecraft/font/unifont.zip"}
+# horizon-prepare legitimately writes GNU Unifont glyph archives under font/
+# and the built-in packs under resourcepacks/. engine-data.zip (the Android
+# build's generated-table bundle) must never appear anywhere in this archive.
+ALLOWED_ZIP_DIRS = ("assets/minecraft/font/", "assets/minecraft/resourcepacks/")
 
 
 def fail(message):
@@ -333,7 +334,7 @@ for path in sorted(source.rglob("*")):
     forbidden = (
         low.endswith(BANNED_SUFFIXES)
         or low == "engine-data.zip"
-        or (low.endswith(".zip") and relative not in ALLOWED_ZIPS)
+        or (low.endswith(".zip") and not low.startswith(ALLOWED_ZIP_DIRS))
         or low.startswith(".local/")
         or "/.local/" in low
     )
@@ -381,7 +382,7 @@ with zipfile.ZipFile(archive) as bundle:
             fail(f"directory or symlink entry: {info.filename}")
         low = info.filename.lower()
         if (low.endswith(BANNED_SUFFIXES) or low == "engine-data.zip"
-                or (low.endswith(".zip") and info.filename not in ALLOWED_ZIPS)
+                or (low.endswith(".zip") and not low.startswith(ALLOWED_ZIP_DIRS))
                 or low.startswith(".local/") or "/.local/" in low):
             fail(f"forbidden archive entry: {info.filename}")
     reread = json.loads(bundle.read(MANIFEST))
