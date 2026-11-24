@@ -198,6 +198,10 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — lock-batch rebuild: CI run 45410504472 **GREEN**. Artifact verified: ELF64/AArch64,
+  92,851,016 bytes, archive SHA-256
+  `6f2fe38e66579fdfd9a5aed0a2d09e2ecdcc4448870b45cef4b9b4346c69b2ca`, binary SHA-256
+  `87d16484825e5185f22631c7243527a6dad685264c10a63d0c5cea8e7ad0a0a8`. Awaiting owner retest.
 - 2026-11-24 — **sixth real tablet runtime evidence (owner)**: major progress — resources loaded
   (35,723 block states, 1,658 items, 67 biomes), vanilla server startup logs appeared, port 25565
   bound, level "world" preparation began; then failed with `world is already open in another
