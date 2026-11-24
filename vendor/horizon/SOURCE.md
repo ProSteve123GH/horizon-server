@@ -246,3 +246,9 @@ A follow-up cross-compile error (CI run 45325742272) was E0425 `cannot find valu
 `crates/horizon-mod-package/src/local_control/unix.rs:193`: `peer()` obtained credentials only under
 `target_os = "linux"` or `"macos"`. Second minimal patch: extend the Linux `SO_PEERCRED` branch with
 `target_os = "android"` (Bionic exposes the same socket option). Inline comment marks the change.
+
+A third cross-compile error (CI run 45326517856) was E0432/E0599 in
+`crates/horizon-client-input/src/keybinds.rs`: `winit::platform::scancode` and `to_scancode()` are not
+available on Android. Third minimal patch: gate that import and call behind
+`#[cfg(not(target_os = "android"))]`, returning 0 on Android (the dedicated server never reads
+physical-key scan codes). No gameplay behavior on desktop clients is changed.

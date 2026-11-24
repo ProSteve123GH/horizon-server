@@ -361,6 +361,9 @@ pub fn layout_key_name(
 /// doesn't identify; 0 when there is neither. Stable within a platform only.
 pub fn raw_key_code(physical: winit::keyboard::PhysicalKey) -> u32 {
     use winit::keyboard::{NativeKeyCode, PhysicalKey};
+    // horizon-server patch: winit's scancode extension is absent on Android; the dedicated
+    // CLI never reads physical-key scan codes, so fall back to 0 there.
+    #[cfg(not(target_os = "android"))]
     use winit::platform::scancode::PhysicalKeyExtScancode;
     match physical {
         PhysicalKey::Unidentified(native) => match native {
@@ -368,7 +371,16 @@ pub fn raw_key_code(physical: winit::keyboard::PhysicalKey) -> u32 {
             NativeKeyCode::MacOS(c) | NativeKeyCode::Windows(c) => c.into(),
             NativeKeyCode::Unidentified => 0,
         },
-        PhysicalKey::Code(_) => physical.to_scancode().unwrap_or(0),
+        PhysicalKey::Code(_) => {
+            #[cfg(not(target_os = "android"))]
+            {
+                physical.to_scancode().unwrap_or(0)
+            }
+            #[cfg(target_os = "android")]
+            {
+                0
+            }
+        }
     }
 }
 
