@@ -6,9 +6,13 @@ built from the Horizon engine. The release artifact is a single native executabl
 Python, Docker or helper binary at runtime. Each operator's executable downloads and verifies the
 required Mojang inputs directly from official endpoints; no Mojang game files are bundled.
 
-**Status: implementation underway, milestone one (Android ARM64).** See [`PROGRESS.md`](PROGRESS.md)
-for the live acceptance checklist, evidence and blockers. [`TASK.md`](TASK.md) holds the full
-requirements, target matrix and definition of done; [`AGENTS.md`](AGENTS.md) holds contributor rules.
+**Status: implementation underway, milestone one (Android ARM64).** The CLI/config/EULA/bootstrap/
+datapack/self-spawn scaffolding is unit-tested (41 unit + 3 integration tests passing), and a direct
+no-mod engine entry seam has been type-verified on hosted CI. An engine-enabled ARM64 cross-build is
+in progress; no playable server or tablet validation exists yet. See [`PROGRESS.md`](PROGRESS.md)
+for the live acceptance checklist, evidence and blockers, and [`TABLET_TEST_PLAN.md`](TABLET_TEST_PLAN.md)
+for the owner-run acceptance procedure. [`TASK.md`](TASK.md) holds the full requirements, target
+matrix and definition of done; [`AGENTS.md`](AGENTS.md) holds contributor rules.
 
 ## Scope
 
