@@ -228,3 +228,16 @@ assets, decompiled source, generated resource folders, `.local/`, prepared data
 (`horizon-data.bin`), `engine-data.zip`, or real player/world data — none of these exist in the
 upstream commit's tracked tree, and the exclusion check above is empty. All content remains
 upstream's LGPL-3.0 source-controlled material. No build/test/clippy was run; no commit was made.
+
+## 10. Downstream patch for the Android ARM64 CLI (horizon-server)
+
+`horizon-server` re-execs itself with a private flag and enters the dedicated game loop through
+`horizon_client::entry::prepare()`/`start()`. On `aarch64-linux-android`, upstream's
+`horizon-mod-package` compiled `runtime_leases.rs`, which references `crate::holder`, while
+`holder`/`local_control` were gated to `linux`, `macos` and `windows` only. That produced E0433 and
+E0277 (`could not compile horizon-mod-package`) in CI run 45324523961.
+
+Minimal downstream patch applied here: add `target_os = "android"` to the two `cfg(all(...))` blocks
+in `crates/horizon-mod-package/src/lib.rs` that gate `holder` and `local_control`. No mod runtime is
+added — `horizon-mod-host`/wasmtime are still absent from the dependency graph. The patch is
+documented inline beside each change. Upstream's original file is otherwise unchanged.

@@ -198,6 +198,12 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — first engine-enabled ARM64 CI run 45324523961 **failed** (exit 101) while compiling
+  `horizon-mod-package` for Android: E0433 `cannot find holder in crate` at
+  `crates/horizon-mod-package/src/runtime_leases.rs:431`, because upstream gates `holder`/
+  `local_control` to linux/macos/windows while Android still compiles the referencing module.
+  Minimal documented vendor patch adds `target_os = "android"` to those two cfg blocks; no mod
+  runtime is added. Rebuild pending.
 - 2026-11-24 — engine-link CI run 45323508643 **success**: both "Type-check the no-mod engine entry"
   and "Audit that no mod runtime entered the graph" passed on hosted CI. The direct entry seam is
   now type-verified (host toolchain). ARM64 workflow updated to build with `--features engine` and
