@@ -38,6 +38,7 @@ fn help_text() -> &'static str {
        --accept-eula         Explicitly accept the EULA for non-interactive setup\n\
        --offline             Require already-verified cached resources (no network)\n\
        --prepared-folder <path>  Verified prepared-data folder (interim source)\n\
+       --prepared-bundle <path>  CI-generated prepared-data ZIP archive\n\
      \n\
      The Minecraft EULA must be accepted explicitly: answer the terminal prompt or set\n\
      --accept-eula after reading https://aka.ms/MinecraftEULA. No game files are bundled."
@@ -195,14 +196,25 @@ fn run(args: &[String], injected_answer: Option<&str>) -> i32 {
     }
 
     if args.iter().any(|argument| argument == "prepare") {
+        let bundle = option_value(args, "--prepared-bundle")
+            .or_else(|| env::var("HORIZON_PREPARED_BUNDLE").ok());
         let folder = option_value(args, "--prepared-folder")
-            .or_else(|| env::var("HORIZON_PREPARED_FOLDER").ok())
-            .unwrap_or_default();
-        if folder.is_empty() {
-            eprintln!("horizon-server: prepare requires --prepared-folder <path>");
-            return 2;
-        }
-        match prepared::accept_folder(&dir, Path::new(&folder), bootstrap::VERSION) {
+            .or_else(|| env::var("HORIZON_PREPARED_FOLDER").ok());
+        let result = match (bundle, folder) {
+            (Some(bundle), _) => {
+                prepared::accept_bundle(&dir, Path::new(&bundle), bootstrap::VERSION)
+            }
+            (None, Some(folder)) => {
+                prepared::accept_folder(&dir, Path::new(&folder), bootstrap::VERSION)
+            }
+            (None, None) => {
+                eprintln!(
+                    "horizon-server: prepare requires --prepared-bundle <archive> or --prepared-folder <path>"
+                );
+                return 2;
+            }
+        };
+        match result {
             Ok(data) => {
                 println!("Accepted prepared data at {}", data.root.display());
                 return 0;

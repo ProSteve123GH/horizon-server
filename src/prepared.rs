@@ -20,6 +20,7 @@ use std::io::{self, Read};
 use std::path::{Component, Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
+use zip::ZipArchive;
 
 /// Manifest file that must sit at the root of a prepared-data folder.
 pub const MANIFEST_FILE_NAME: &str = "prepared-manifest.json";
@@ -230,6 +231,12 @@ fn read_manifest(folder: &Path) -> Result<(PreparedManifest, Vec<String>), Prepa
     let manifest: PreparedManifest =
         serde_json::from_slice(&bytes).map_err(|error| PreparedError::Json(error.to_string()))?;
 
+    let paths = manifest_paths(&manifest)?;
+    Ok((manifest, paths))
+}
+
+/// Validate every manifest path once, returning canonical relative paths.
+fn manifest_paths(manifest: &PreparedManifest) -> Result<Vec<String>, PreparedError> {
     let mut paths = Vec::with_capacity(manifest.files.len());
     for file in &manifest.files {
         let canonical = validate_relative_path(&file.path)?;
@@ -238,7 +245,7 @@ fn read_manifest(folder: &Path) -> Result<(PreparedManifest, Vec<String>), Prepa
         }
         paths.push(canonical);
     }
-    Ok((manifest, paths))
+    Ok(paths)
 }
 
 /// Reject malformed digests up front so a bad manifest cannot silently bypass verification.
@@ -409,6 +416,104 @@ pub fn accept_folder(
     }
 
     Ok(PreparedData { root: target, manifest })
+}
+
+/// Install a prepared dataset from a CI-generated ZIP archive.
+///
+/// The archive must contain `prepared-manifest.json` and every listed file at its exact relative
+/// path. Only listed files are extracted, unsafe paths and symlink entries are rejected, every file
+/// is hash/size checked, and the staged tree is re-verified before atomic publication.
+pub fn accept_bundle(
+    server_dir: &Path,
+    archive: &Path,
+    version: &str,
+) -> Result<PreparedData, PreparedError> {
+    sanitize_version(version)?;
+    let root = prepared_root(server_dir);
+    fs::create_dir_all(&root)?;
+    let target = root.join(version);
+    let stage = root.join(STAGING_DIR);
+    if stage.exists() {
+        fs::remove_dir_all(&stage)?;
+    }
+
+    let manifest = (|| -> Result<PreparedManifest, PreparedError> {
+        fs::create_dir_all(&stage)?;
+        let file = fs::File::open(archive)?;
+        let mut zip = ZipArchive::new(file)
+            .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+
+        let mut manifest_entry = zip
+            .by_name(MANIFEST_FILE_NAME)
+            .map_err(|_| PreparedError::MissingFile(MANIFEST_FILE_NAME.to_owned()))?;
+        if manifest_entry.is_dir() || is_symlink_entry(&manifest_entry) {
+            return Err(PreparedError::Symlink(MANIFEST_FILE_NAME.to_owned()));
+        }
+        let mut bytes = Vec::new();
+        manifest_entry.read_to_end(&mut bytes)?;
+        let manifest: PreparedManifest =
+            serde_json::from_slice(&bytes).map_err(|error| PreparedError::Json(error.to_string()))?;
+        if manifest.version != version {
+            return Err(PreparedError::VersionMismatch {
+                expected: version.to_owned(),
+                found: manifest.version.clone(),
+            });
+        }
+        let paths = manifest_paths(&manifest)?;
+        fs::write(stage.join(MANIFEST_FILE_NAME), &bytes)?;
+        drop(manifest_entry);
+
+        for (file, relative) in manifest.files.iter().zip(paths.iter()) {
+            let mut entry = zip
+                .by_name(relative)
+                .map_err(|_| PreparedError::MissingFile(relative.clone()))?;
+            if entry.is_dir() || is_symlink_entry(&entry) {
+                return Err(PreparedError::Symlink(relative.clone()));
+            }
+            validate_hash_shape(relative, &file.sha256)?;
+            let destination = stage.join(relative);
+            if let Some(parent) = destination.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            let mut written = fs::File::create(&destination)?;
+            let copied = io::copy(&mut entry, &mut written)?;
+            if copied != file.size {
+                return Err(PreparedError::SizeMismatch {
+                    path: relative.clone(),
+                    expected: file.size,
+                    found: copied,
+                });
+            }
+            if !sha256_file(&destination)?.eq_ignore_ascii_case(&file.sha256) {
+                return Err(PreparedError::HashMismatch {
+                    path: relative.clone(),
+                    expected: file.sha256.clone(),
+                    found: sha256_file(&destination)?,
+                });
+            }
+        }
+        Ok(manifest)
+    })();
+
+    let manifest = match manifest {
+        Ok(manifest) => manifest,
+        Err(error) => {
+            let _ = fs::remove_dir_all(&stage);
+            return Err(error);
+        }
+    };
+    if let Err(error) = verify_folder(&stage, version).and_then(|_| commit_staged(&root, &stage, &target)) {
+        let _ = fs::remove_dir_all(&stage);
+        return Err(error);
+    }
+    Ok(PreparedData { root: target, manifest })
+}
+
+/// Reject ZIP entries whose Unix mode marks them as symlinks (zip-slip via symlink).
+fn is_symlink_entry<R: Read + ?Sized>(entry: &zip::read::ZipFile<'_, R>) -> bool {
+    entry
+        .unix_mode()
+        .is_some_and(|mode| mode & 0o170000 == 0o120000)
 }
 
 /// Load the accepted dataset for `version`, re-verifying every file before returning it.
@@ -595,7 +700,10 @@ fn sha256_file(path: &Path) -> Result<String, PreparedError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::Write;
     use std::sync::atomic::{AtomicU64, Ordering};
+    use zip::write::SimpleFileOptions;
+    use zip::ZipWriter;
 
     static NEXT_ID: AtomicU64 = AtomicU64::new(0);
 
@@ -885,6 +993,33 @@ mod tests {
             );
         }
         assert!(!server.join(".horizon/prepared/escape").exists());
+        fs::remove_dir_all(&base).unwrap();
+    }
+
+    #[test]
+    fn accepts_a_signed_style_bundle_with_verified_entries() {
+        let base = scratch("bundle");
+        let server = base.join("server");
+        let archive = base.join("prepared.zip");
+        let hash = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
+        let manifest = format!(
+            r#"{{"version":"26.3","files":[{{"path":"data.bin","sha256":"{hash}","size":3}}]}}"#
+        );
+        let mut writer = ZipWriter::new(fs::File::create(&archive).unwrap());
+        writer
+            .start_file(MANIFEST_FILE_NAME, SimpleFileOptions::default())
+            .unwrap();
+        writer.write_all(manifest.as_bytes()).unwrap();
+        writer
+            .start_file("data.bin", SimpleFileOptions::default())
+            .unwrap();
+        writer.write_all(b"abc").unwrap();
+        writer.finish().unwrap();
+
+        let accepted = accept_bundle(&server, &archive, "26.3").unwrap();
+        assert_eq!(accepted.manifest.version, "26.3");
+        assert!(accepted.root.join("data.bin").exists());
+        assert!(load_accepted(&server, "26.3").unwrap().is_some());
         fs::remove_dir_all(&base).unwrap();
     }
 }
