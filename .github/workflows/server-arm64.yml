@@ -1,0 +1,72 @@
+name: server-arm64
+
+# Milestone-one CI: host verification plus the pinned Android ARM64 cross-build.
+# Later targets are added only after ARM64 is stable and tablet-validated (TASK.md §0).
+
+on:
+  push:
+    branches: [server]
+  pull_request:
+    branches: [server]
+
+permissions:
+  contents: read
+
+env:
+  RUST_TOOLCHAIN: 1.95.0
+  NDK_REVISION: 28.2.13676358
+  NDK_ZIP: android-ndk-r28c-linux.zip
+  ANDROID_TARGET: aarch64-linux-android
+
+jobs:
+  arm64-cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pinned Rust toolchain and Android target
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+            | sh -s -- -y --default-toolchain "$RUST_TOOLCHAIN" --profile minimal \
+                --no-modify-path --target "$ANDROID_TARGET"
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - name: Install pinned Android NDK
+        run: |
+          curl -fL --retry 3 -o "$RUNNER_TEMP/$NDK_ZIP" \
+            "https://dl.google.com/android/repository/$NDK_ZIP"
+          unzip -q "$RUNNER_TEMP/$NDK_ZIP" -d "$RUNNER_TEMP/ndk"
+          test -f "$RUNNER_TEMP/ndk/android-ndk-r28c/source.properties"
+          grep -q "Pkg.Revision = $NDK_REVISION" \
+            "$RUNNER_TEMP/ndk/android-ndk-r28c/source.properties"
+
+      - name: Host unit tests (locked dependencies)
+        run: cargo test --locked
+
+      - name: Cross-compile the single ARM64 executable
+        run: |
+          NDK="$RUNNER_TEMP/ndk/android-ndk-r28c/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          echo "CC_aarch64_linux_android=$NDK/aarch64-linux-android28-clang" >> "$GITHUB_ENV"
+          echo "CXX_aarch64_linux_android=$NDK/aarch64-linux-android28-clang++" >> "$GITHUB_ENV"
+          echo "AR_aarch64_linux_android=$NDK/llvm-ar" >> "$GITHUB_ENV"
+          echo "CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$NDK/aarch64-linux-android28-clang" >> "$GITHUB_ENV"
+          echo "NDK_BIN=$NDK" >> "$GITHUB_ENV"
+          cargo build --locked --release --target "$ANDROID_TARGET"
+
+      - name: Audit architecture and artifact shape
+        run: |
+          BINARY="target/$ANDROID_TARGET/release/horizon-server"
+          test -x "$BINARY"
+          "$NDK_BIN/llvm-readelf" -h "$BINARY" | grep -q 'Machine: AArch64'
+          "$NDK_BIN/llvm-readelf" -h "$BINARY" | grep -q 'ELF64'
+          # Exactly one executable, no Mojang content or extra sidecars in the release directory.
+          find "target/$ANDROID_TARGET/release" -maxdepth 1 -type f \
+            ! -name horizon-server ! -name '*.d' -print | grep . && exit 1 || true
+          find . -type f \( -name '*.jar' -o -name 'horizon-data.bin' \) -print | grep . && exit 1 || true
+          file "$BINARY" || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: horizon-server-aarch64-linux-android
+          path: target/aarch64-linux-android/release/horizon-server
+          if-no-files-found: error
