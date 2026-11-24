@@ -198,6 +198,11 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — startup correctness fix: internal engine mode is now selected by the private env var
+  `HORIZON_SERVER_INTERNAL_ENGINE=1` instead of a private argv flag, and the child is launched with
+  only upstream-valid arguments (`--dedicated --nogui --resources … --universe …`). Without this,
+  upstream's strict `entry::prepare()` would have rejected our `--dir`/internal flag. Local
+  `cargo test --locked` → **41 unit + 3 integration passed**. Not yet runtime-verified on a device.
 - 2026-11-24 — **engine-enabled ARM64 CI run 45330665004 GREEN**: host tests, cross-compile with
   `--features engine`, no-mod graph audit, artifact audit/package and upload all passed (23m28s).
   Downloaded artifact independently verified: archive contains only `horizon-server` and

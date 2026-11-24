@@ -7,16 +7,20 @@
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-use crate::engine::INTERNAL_FLAG;
+use crate::engine::INTERNAL_ENV;
 
-/// Arguments for the hidden internal engine mode. No secret is passed on the command line.
+/// Arguments for the hidden internal engine mode. They must be valid upstream game arguments:
+/// `entry::prepare()` parses every argv entry strictly, so our private handoff uses an env var.
+/// No secret is passed on the command line.
 pub fn engine_args(dir: &Path) -> Vec<String> {
+    let resources = dir.join(".horizon/resources/26.3");
     vec![
-        INTERNAL_FLAG.to_owned(),
-        "--dir".to_owned(),
-        dir.to_string_lossy().into_owned(),
         "--dedicated".to_owned(),
         "--nogui".to_owned(),
+        "--resources".to_owned(),
+        resources.to_string_lossy().into_owned(),
+        "--universe".to_owned(),
+        dir.to_string_lossy().into_owned(),
     ]
 }
 
@@ -31,6 +35,7 @@ pub fn engine_command(dir: &Path) -> Result<Command, String> {
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
+        .env(INTERNAL_ENV, "1")
         .env("HORIZON_NO_AUDIO", "1")
         .env("HORIZON_NO_DATA_FILE", "1");
     Ok(command)
@@ -53,11 +58,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn internal_mode_is_always_the_first_argument() {
+    fn internal_argv_is_valid_for_upstream_entry() {
         let args = engine_args(Path::new("/srv/horizon"));
-        assert_eq!(args[0], INTERNAL_FLAG);
-        assert!(args.contains(&"--dedicated".to_owned()));
+        assert_eq!(args[0], "--dedicated");
+        assert!(!args.iter().any(|arg| arg == crate::engine::INTERNAL_FLAG));
         assert!(args.contains(&"--nogui".to_owned()));
+        assert!(args.contains(&"/srv/horizon/.horizon/resources/26.3".to_owned()));
         assert!(args.contains(&"/srv/horizon".to_owned()));
     }
 
@@ -65,5 +71,9 @@ mod tests {
     fn command_targets_this_executable_only() {
         let command = engine_command(Path::new(".")).unwrap();
         assert_eq!(command.get_program(), std::env::current_exe().unwrap().as_os_str());
+        assert_eq!(
+            command.get_envs().find(|(key, _)| *key == INTERNAL_ENV).and_then(|(_, value)| value),
+            Some(std::ffi::OsStr::new("1"))
+        );
     }
 }

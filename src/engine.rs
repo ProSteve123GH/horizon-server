@@ -8,9 +8,13 @@
 //! to be a running server.
 
 pub const INTERNAL_FLAG: &str = "--__horizon-engine-internal";
+/// Private handoff used by the supervisor. An env var keeps the child's argv valid for upstream's
+/// `entry::prepare()`, which parses every argument strictly.
+pub const INTERNAL_ENV: &str = "HORIZON_SERVER_INTERNAL_ENGINE";
 
 pub fn is_internal_invocation(args: &[String]) -> bool {
-    args.first().is_some_and(|argument| argument == INTERNAL_FLAG)
+    std::env::var(INTERNAL_ENV).as_deref() == Ok("1")
+        || args.first().is_some_and(|argument| argument == INTERNAL_FLAG)
 }
 
 #[cfg(feature = "engine")]
