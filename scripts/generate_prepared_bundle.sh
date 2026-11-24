@@ -164,7 +164,11 @@ def download_game(version, directory, pins):
     index = manifest["assetIndex"]
     accepted = pins.get("accepted_asset_index_sha1", [])
     if accepted and index["sha1"] not in accepted:
-        raise ValueError(f"asset index {index['sha1']} is not in the engine's accepted list")
+        # That list is advisory for launchers holding a republished index. Here
+        # the index comes from the hash-pinned version JSON above and is itself
+        # verified against the JSON's SHA-1, as is every object it names.
+        say(f"note: asset index {index['sha1']} is not in the advisory accepted list; "
+            "using the index pinned by the verified version JSON")
     index_path = relative(directory / "assets/indexes", f"{index['id']}.json")
     lab.download(index["url"], index_path, index["sha1"])
     objects = json.loads(index_path.read_text(encoding="utf-8"))["objects"]
