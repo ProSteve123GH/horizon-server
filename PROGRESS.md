@@ -198,6 +198,10 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — third engine-enabled ARM64 run 45325742272: host tests green, cross-compile failed with
+  E0425 `cannot find value uid` at vendored `local_control/unix.rs:193` — peer-credential branch was
+  Linux/macOS-only. Minimal documented patch extends the Linux `SO_PEERCRED` branch to Android.
+  Rebuild pending.
 - 2026-11-24 — second engine-enabled ARM64 run 45325420328 failed earlier in **host tests**: two
   bootstrap staging tests shared `/tmp/resources/26.3` because their synthetic `cache_dir` was the
   temp dir itself rather than a production-like `.horizon/downloads/26.3` path. Fixed the fixtures;

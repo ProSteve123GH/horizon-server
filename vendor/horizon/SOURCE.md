@@ -241,3 +241,8 @@ Minimal downstream patch applied here: add `target_os = "android"` to the two `c
 in `crates/horizon-mod-package/src/lib.rs` that gate `holder` and `local_control`. No mod runtime is
 added — `horizon-mod-host`/wasmtime are still absent from the dependency graph. The patch is
 documented inline beside each change. Upstream's original file is otherwise unchanged.
+
+A follow-up cross-compile error (CI run 45325742272) was E0425 `cannot find value uid` in
+`crates/horizon-mod-package/src/local_control/unix.rs:193`: `peer()` obtained credentials only under
+`target_os = "linux"` or `"macos"`. Second minimal patch: extend the Linux `SO_PEERCRED` branch with
+`target_os = "android"` (Bionic exposes the same socket option). Inline comment marks the change.
