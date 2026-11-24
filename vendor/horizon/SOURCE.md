@@ -256,5 +256,6 @@ physical-key scan codes). No gameplay behavior on desktop clients is changed.
 A fourth cross-compile error (CI run 45327640706) was E0432/E0599 in
 `crates/horizon-client/src/game/runtime/window_handler.rs`: `winit::platform::modifier_supplement`
 and `key_without_modifiers()` are also unavailable on Android. Fourth minimal patch: gate them off
-on Android and use `event.key.clone()` for the layout name there. The dedicated server has no
+on Android and use `event.logical_key.clone()` for the layout name there (a follow-up compile error
+in CI run 45329349790 showed the field is `logical_key` in winit 0.30). The dedicated server has no
 keyboard input; desktop behavior is unchanged.

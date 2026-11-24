@@ -198,6 +198,9 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — sixth engine-enabled ARM64 run 45329349790: host tests green, cross-compile failed
+  with E0609 `no field key on KeyEvent` at the patched window handler. Corrected the Android fallback
+  to use `event.logical_key.clone()` (winit 0.30 field name). Rebuild pending.
 - 2026-11-24 — fifth engine-enabled ARM64 run 45327640706: host tests green, cross-compile failed
   with E0432/E0599 (`winit::platform::modifier_supplement` / `key_without_modifiers` absent on
   Android) at vendored `window_handler.rs`. Fourth documented patch gates them off on Android with

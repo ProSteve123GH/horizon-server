@@ -477,7 +477,7 @@ impl ApplicationHandler for Game<'_> {
                 }
                 #[cfg(target_os = "android")]
                 {
-                    event.key.clone()
+                    event.logical_key.clone()
                 }
             };
             let layout_key =
