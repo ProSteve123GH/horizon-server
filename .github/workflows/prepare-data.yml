@@ -95,9 +95,11 @@ jobs:
                   low = info.filename.lower()
                   assert info.is_dir() is False, info.filename
                   assert ((info.external_attr >> 16) & 0o170000) != 0o120000, info.filename
-                  assert not low.endswith((".jar", ".class", ".zip")), info.filename
-                  assert not (low.startswith(".local/") or "/.local/" in low), info.filename
+                  assert not low.endswith((".jar", ".class")), info.filename
                   assert low != "engine-data.zip", info.filename
+                  assert (not low.endswith(".zip")
+                          or info.filename == "assets/minecraft/font/unifont.zip"), info.filename
+                  assert not (low.startswith(".local/") or "/.local/" in low), info.filename
           print(f"audited {len(listed)} verified prepared files in {archive.name}")
           PY
 

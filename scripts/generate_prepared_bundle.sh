@@ -304,7 +304,10 @@ from pathlib import Path
 source, archive, version = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3]
 MANIFEST = "prepared-manifest.json"
 FIXED_TIME = (1980, 1, 1, 0, 0, 0)
-BANNED_SUFFIXES = (".jar", ".class", ".zip")
+BANNED_SUFFIXES = (".jar", ".class")
+# horizon-prepare adds GNU Unifont glyphs as this one archive; engine-data.zip
+# (the Android build's generated-table bundle) must never appear here.
+ALLOWED_ZIPS = {"assets/minecraft/font/unifont.zip"}
 
 
 def fail(message):
@@ -327,7 +330,14 @@ for path in sorted(source.rglob("*")):
     ):
         fail(f"unsafe prepared path: {relative!r}")
     low = relative.lower()
-    if low.endswith(BANNED_SUFFIXES) or low.startswith(".local/") or "/.local/" in low:
+    forbidden = (
+        low.endswith(BANNED_SUFFIXES)
+        or low == "engine-data.zip"
+        or (low.endswith(".zip") and relative not in ALLOWED_ZIPS)
+        or low.startswith(".local/")
+        or "/.local/" in low
+    )
+    if forbidden:
         fail(f"forbidden payload in prepared folder: {relative}")
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -370,7 +380,9 @@ with zipfile.ZipFile(archive) as bundle:
         if info.is_dir() or ((info.external_attr >> 16) & 0o170000) == 0o120000:
             fail(f"directory or symlink entry: {info.filename}")
         low = info.filename.lower()
-        if low.endswith(BANNED_SUFFIXES) or low.startswith(".local/") or "/.local/" in low:
+        if (low.endswith(BANNED_SUFFIXES) or low == "engine-data.zip"
+                or (low.endswith(".zip") and info.filename not in ALLOWED_ZIPS)
+                or low.startswith(".local/") or "/.local/" in low):
             fail(f"forbidden archive entry: {info.filename}")
     reread = json.loads(bundle.read(MANIFEST))
     if reread != {"version": version, "files": files}:
