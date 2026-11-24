@@ -50,9 +50,18 @@ jobs:
             "https://dl.google.com/android/repository/$NDK_ZIP"
           unzip -q "$RUNNER_TEMP/$NDK_ZIP" -d "$RUNNER_TEMP/ndk"
 
+      # Use a block scalar here: YAML folds a trailing backslash in a plain
+      # scalar into a literal backslash plus a space, which the shell reads as
+      # an escaped leading space on the filename argument.
       - name: Verify NDK revision
-        run: grep -q "Pkg.Revision = $NDK_REVISION" \
-          "$RUNNER_TEMP/ndk/android-ndk-r28c/source.properties"
+        run: |
+          NDK_DIR="$RUNNER_TEMP/ndk/android-ndk-r28c"
+          if [ ! -f "$NDK_DIR/source.properties" ]; then
+            echo "::error::Missing $NDK_DIR/source.properties; extracted tree:"
+            find "$RUNNER_TEMP/ndk" -maxdepth 2 -print
+            exit 1
+          fi
+          grep -q "Pkg.Revision = $NDK_REVISION" "$NDK_DIR/source.properties"
 
       - name: Host unit tests (locked dependencies)
         run: cargo test --locked
