@@ -198,6 +198,10 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — fifth engine-enabled ARM64 run 45327640706: host tests green, cross-compile failed
+  with E0432/E0599 (`winit::platform::modifier_supplement` / `key_without_modifiers` absent on
+  Android) at vendored `window_handler.rs`. Fourth documented patch gates them off on Android with
+  `event.key.clone()` fallback; desktop behavior unchanged. Rebuild pending.
 - 2026-11-24 — fourth engine-enabled ARM64 run 45326517856: host tests green, cross-compile failed
   with E0432/E0599 (`winit::platform::scancode` / `to_scancode` absent on Android) at vendored
   `horizon-client-input/src/keybinds.rs`. Minimal documented patch gates the scancode helper off on

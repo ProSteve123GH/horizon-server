@@ -462,15 +462,26 @@ impl ApplicationHandler for Game<'_> {
         };
         self.handle_window_event(event_loop, id, event, input_trace::InputOrigin::User);
         if let Some((event, modifiers)) = key {
+            // horizon-server patch: this winit platform extension is absent on Android; the
+            // dedicated server never receives keyboard input, so use the event's key as-is there.
+            #[cfg(not(target_os = "android"))]
             use winit::platform::modifier_supplement::KeyEventExtModifierSupplement;
             let name = match event.physical_key {
                 PhysicalKey::Code(code) => horizon_client::keybinds::key_name(code),
                 PhysicalKey::Unidentified(_) => None,
             };
-            let layout_key = horizon_client::keybinds::layout_key_name(
-                event.physical_key,
-                &event.key_without_modifiers(),
-            );
+            let layout = {
+                #[cfg(not(target_os = "android"))]
+                {
+                    event.key_without_modifiers()
+                }
+                #[cfg(target_os = "android")]
+                {
+                    event.key.clone()
+                }
+            };
+            let layout_key =
+                horizon_client::keybinds::layout_key_name(event.physical_key, &layout);
             let raw_code = horizon_client::keybinds::raw_key_code(event.physical_key);
             let action = match (event.state, event.repeat) {
                 (winit::event::ElementState::Released, _) => mod_api::KeyAction::Release,
