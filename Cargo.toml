@@ -1,0 +1,24 @@
+[package]
+name = "horizon-server"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+description = "Standalone, single-executable vanilla-compatible Minecraft 26.3 dedicated server"
+publish = false
+
+[[bin]]
+name = "horizon-server"
+path = "src/main.rs"
+
+[dependencies]
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true
+
+[profile.fast]
+inherits = "release"
+lto = false
+codegen-units = 16

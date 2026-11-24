@@ -38,8 +38,9 @@ validation policy are established in local-only `DEV.md`.
 
 ## Milestone-one acceptance checklist (TASK.md §0, §8 — Android ARM64 subset)
 
-- [ ] M1.1 `aarch64-linux-android` cross-compilation succeeds with pinned NDK/Rust toolchain; exact
-      commands and versions recorded in `DEV.md`.
+- [~] M1.1 `aarch64-linux-android` cross-compilation succeeds with pinned NDK/Rust toolchain; exact
+      commands and versions recorded in `DEV.md`. **Partial:** CLI skeleton cross-compiles (ELF64
+      AArch64 verified); the final engine-linked binary does not exist yet.
 - [ ] M1.2 Exactly one `horizon-server` ELF executable is produced (no APK, JNI entry, sidecar, JAR,
       helper or Mojang content); architecture verified with `file`/`readelf`.
 - [ ] M1.3 Binary starts in an empty Termux directory, explains the EULA and refuses to start without
@@ -88,3 +89,9 @@ validation policy are established in local-only `DEV.md`.
   and `TASK.md` require `26.3`; upstream 26.3 is authoritative for this product.
 - 2026-11-24 — toolchain provisioning started in background: rustup 1.95.0 with
   `aarch64-linux-android` target, NDK r28b zip download. Not yet complete/verified.
+- 2026-11-24 — first vertical slice implemented (CLI, `server.properties` default/preservation,
+  explicit EULA acceptance, internal-mode guard) with **12/12 host unit tests passing**
+  (`cargo test` output: `test result: ok. 12 passed; 0 failed`).
+- 2026-11-24 — cross-compile verified: `cargo build --release --target aarch64-linux-android`
+  with NDK 28.2.13676358 clang/linker produced a 342 KB ELF; `llvm-readelf -h` → `Class: ELF64`,
+  `Machine: AArch64`. This is the CLI skeleton only, not an integrated server binary.
