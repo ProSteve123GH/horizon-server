@@ -198,6 +198,13 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — **fourth real tablet runtime evidence (owner)**: with accepted prepared data, the
+  engine started and printed `Horizon 0.1.0`, then failed with `engine platform socket is not
+  installed` (crash `crash-2026-11-24_19.20.23-server.txt`). Owner requested a single batch fix
+  instead of repeated 26-minute build cycles. Three parallel source investigations launched for the
+  full set of required platform providers, the Android fork's equivalent startup, and all other
+  startup blockers; a local host `cargo check --features engine` is warming the cache for fast
+  iteration. We will apply one comprehensive patch and one CI build.
 - 2026-11-24 — final resource-path rebuild: CI run 45373570095 **GREEN**. Artifact verified: ELF64/
   AArch64, 91,579,592 bytes. Archive SHA-256
   `94ca8d75cfdeac73c83283d857f6bc3a602e54a2bdaf2e474e8d8f26ead2585a`; binary SHA-256
