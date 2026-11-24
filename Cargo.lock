@@ -1633,7 +1633,7 @@ dependencies = [
 
 [[package]]
 name = "horizon-server"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "horizon-client",
  "horizon-engine-slots",
