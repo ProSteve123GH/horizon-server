@@ -40,9 +40,12 @@ Use a fresh scratch directory each time; never point a test at a real world or p
 
 3. **Prepared data (owner-approved interim source)**
    ```sh
-   ./horizon-server prepare --dir <server-dir> --prepared-folder <folder-with-prepared-manifest.json>
+   ./horizon-server prepare --dir <server-dir> --prepared-bundle <horizon-prepared-26.3.zip>
    ```
-   The folder must contain `prepared-manifest.json` (`version: 26.3`, per-file SHA-256 and size).
+   This is the no-PC path: download the CI-produced `horizon-prepared-26.3.zip` artifact on the
+   tablet and pass its path. The archive must contain `prepared-manifest.json`
+   (`version: 26.3`, per-file SHA-256 and size). `--prepared-folder <dir>` still works if a prepared
+   folder is available.
    Verify a tampered file or path is rejected, and that the accepted copy lands in
    `<server-dir>/.horizon/prepared/26.3` with the manifest intact.
 
@@ -50,28 +53,28 @@ Use a fresh scratch directory each time; never point a test at a real world or p
    After a successful bootstrap, rerun with `--offline`; expected: verified cache reused, no network
    required. Delete `.horizon/downloads` and confirm `--offline` fails with an actionable message.
 
-6. **Configuration and directory**
+5. **Configuration and directory**
    Check `server.properties` defaults, edit `motd`/`server-port`, restart and verify the value was
    preserved and applied. Check `logs/`, player JSON files and `<level-name>/datapacks/` exist.
 
-7. **World lifecycle**
+6. **World lifecycle**
    Create a world, stop gracefully, start again and confirm the same world is reopened (`level.dat`,
    region files). Verify no world was overwritten by first-run setup.
 
-8. **Vanilla client**
+7. **Vanilla client**
    From an unmodified Minecraft Java 26.3 client, query status and join. Move, load chunks, chat,
    save/restart, travel to Nether and End. Record exact client version and results.
 
-9. **Administration**
+8. **Administration**
    `stop`, `save-all`, `list`, `op`, `deop`, `whitelist`, `ban`, `pardon`, `kick`, `say`; check the
    vanilla player JSON files change as expected.
 
-10. **Datapacks**
+9. **Datapacks**
    Place one directory pack and one ZIP pack with `pack.mcmeta` format 121 in
    `<world>/datapacks/`. Verify `horizon-server datapacks` lists them, that wrong formats are
    rejected, then verify server-side `/datapack list|enable|disable` and `/reload` once integrated.
 
-11. **Shutdown**
+10. **Shutdown**
    Send SIGINT/SIGTERM (or Ctrl-C); confirm clean save, closed sockets and a final log line.
 
 ## Evidence to return
