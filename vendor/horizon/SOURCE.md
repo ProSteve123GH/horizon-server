@@ -6,6 +6,13 @@ below. It is kept in this standalone `horizon-server` product repository purely 
 architecture/protocol/parity reference. Nothing here was built, tested, run or modified by the
 snapshot process, and no game content is bundled.
 
+> **Completeness status (updated):** this tree is now a **complete mirror of every git-tracked
+> file** in the pinned upstream commit — all **11,691** tracked paths are present at their exact
+> upstream-relative paths. The `cargo metadata --no-deps` workspace resolves successfully (77
+> workspace members). It still contains **no Mojang content**. See **section 9** for the exact
+> restore commands and verification results. Sections 2–4 below record the *initial* subset
+> snapshot and are superseded where they describe included/excluded paths.
+
 ## 1. Exact provenance
 
 | Field | Value |
@@ -88,6 +95,8 @@ for the integration lead to review.
 
 ## 3. Included paths
 
+*Initial snapshot only — superseded by section 9, which made the tree complete.*
+
 - `LICENSE`, `THIRD_PARTY_NOTICES.md` (upstream attribution and licence text)
 - `Cargo.toml`, `Cargo.lock`
 - `.cargo/config.toml`
@@ -100,17 +109,20 @@ for the integration lead to review.
 
 ## 4. Excluded paths and artifacts
 
+*Initial snapshot only — superseded by section 9. The only artifacts still excluded are those
+listed below that are not part of upstream's tracked tree (`.git/`, `.local/`, `target/`, `*.jar`,
+`horizon-data.bin`, `engine-data.zip`); all other upstream-tracked paths are now present.*
+
 The following were never copied or were removed from the snapshot:
 
 - `.git/`, `.local/`, `target/`, `.claude/`, CI workflow metadata and other repository meta
   outside the include list
-- `*.jar`, `*.zip` (including `tools/ci/vendor/pyyaml-6.0.3.zip`), `*.bin`, `*.class`, `*.so`,
-  `*.dll`, `*.exe`
+- `*.jar`, `*.bin`, `*.class`, `*.so`, `*.dll`, `*.exe`
 - Mojang / game content, generated resource folders, prepared data (`horizon-data.bin`),
   `engine-data.zip`, real player or world data
-- all binary assets/fixtures: `.png`, `.ttf`, `.nbt`, `.hzperf`, `.tar.xz`, `.hmod`, `.hpack`,
-  `.hshader` — 93 files removed in total. Binary test fixtures are intentionally absent; this is
-  a source-only reference, not a buildable test tree.
+- all binary assets/fixtures were initially removed (`.png`, `.ttf`, `.nbt`, `.hzperf`, `.tar.xz`,
+  `.hmod`, `.hpack`, `.hshader`, `.zip`, `.jpg`, `.webp`, `.ico`, `.icns`). The upstream-source-
+  controlled subset was subsequently restored for buildability — see section 8.
 
 `third_party/libmimalloc-sys/c_src/mimalloc/v3/src/prim/windows/etw.man` is retained: it is a
 UTF-16 encoded XML source file, not a binary artifact.
@@ -140,5 +152,79 @@ to download and verify its inputs from official endpoints at runtime.
 
 All copied source remains the work of the upstream `horizon-rust/horizon` contributors and is
 licensed under LGPL-3.0. Upstream `LICENSE`, `THIRD_PARTY_NOTICES.md`, in-file copyright headers
-and `LICENSES/`-style attribution were preserved where present in the included paths. This file
+and `LICENSES/`-style attribution were preserved where present in the included paths. `SOURCE.md`
 is the only file added by the snapshot process.
+
+## 8. Restored git-tracked binary fixtures (buildability)
+
+The initial snapshot pruned every git-tracked binary file, which left it a reference tree rather
+than a build tree: vendored Rust sources pull in fonts, sprites, SDK archives and test fixtures
+with `include_bytes!`. To make the snapshot buildable, **212 git-tracked binary files** were
+restored byte-for-byte from the pinned commit's git object store (blobless partial clone at
+`/root/scratch/upstream`, `FETCH_HEAD` = `a02b2838d34f4c99726cca349ec0b4d62c5c8fa5`) into their
+exact upstream-relative paths. Every restored blob was verified against the upstream tree OID;
+all 212 matched. Categories restored:
+
+- fonts: 14 `.ttf` files under `crates/horizon-theme/fonts/`
+- UI/controller/icon sprites and documentation media: 158 `.png`, 16 `.webp`, 7 `.jpg`,
+  `.ico`/`.icns` under `crates/`, `docs/media/`, `launcher/` and `packaging/`
+- test data: 5 `.nbt`, 2 `.hzperf`, `.hmod`/`.hpack`/`.hshader` under `crates/` and `tests/`
+- SDK/tooling archives: 4 `.tar.xz` under `crates/horizon-mod-package/src/sdk/` and
+  `tools/ci/vendor/pyyaml-6.0.3.zip`
+
+**No Mojang content is included.** No `*.jar`, `horizon-data.bin`, `engine-data.zip`, `.local/`,
+`target/`, `.git/` or downloaded game resource was restored — none of these exist in the upstream
+commit's tracked tree. All restored files are upstream's own source-controlled fixtures (licensed
+under the project's LGPL-3.0 / third-party notices). The two `include_str!` text fixtures
+(`docs/modpacks/atm10-mods.csv` and `docs/parity/random-chance-seeded.jsonl`) previously noted as
+out of scope were subsequently restored with the full tracked tree in section 9.
+
+## 9. Full tracked-tree restore (completeness)
+
+The earlier snapshot copied only selected directories, so upstream's root `Cargo.toml` listed
+workspace members (e.g. `docs/modding/examples`, `benchmarks`, `launcher`, `packaging`, `tests`,
+`xtask`, `mods`) whose manifests were missing. `cargo metadata --no-deps --manifest-path
+vendor/horizon/Cargo.toml` therefore failed with `failed to load manifest for workspace member
+.../docs/modding/examples`. The tree was completed by restoring **every git-tracked file** from
+the pinned commit.
+
+Source of truth: the existing blobless partial clone at `/root/scratch/upstream`, verified as
+`HEAD` = `FETCH_HEAD` = `a02b2838d34f4c99726cca349ec0b4d62c5c8fa5`.
+
+```sh
+git -C /root/scratch/upstream rev-parse HEAD FETCH_HEAD   # both a02b2838...
+git -C /root/scratch/upstream ls-tree -r --name-only FETCH_HEAD > /tmp/upstream_tracked.txt
+# 11,691 tracked paths
+```
+
+Every tracked path was checked against `vendor/horizon/`; 1,713 were absent. All 1,713 missing
+blobs were already present locally in the partial clone's object store (`GIT_NO_LAZY_FETCH=1
+git cat-file --batch-check` reported 0 missing), so no network fetch was needed. Missing files
+were materialised byte-for-byte from `FETCH_HEAD:<path>` with a single `git cat-file --batch`
+process, using `mkdir -p` for parent directories and refusing to overwrite any path that already
+existed. The 1,713 restored files were all upstream text/source files (`.rs`, `.java`, `.py`,
+`.md`, `.json`, `.yml`, `.toml`, `.svg`, `.nix`, shell scripts, etc.) — no binary blob was
+missing. Categories: `launcher/` (420), `mods/` (417), `docs/` (396), `tests/` (344),
+`benchmarks/` (42), `.github/` (35), `packaging/` (24), `nix/` (8), `xtask/` (5), `roadmap/` (4),
+`LICENSES/` (2), `.githooks/` (2), and root/meta files (`AGENTS.md`, `CLAUDE.md`,
+`CONTRIBUTING.md`, `GOVERNANCE.md`, `README.md`, `ROADMAP.md`, `clippy.toml`, `flake.lock`,
+`flake.nix`, `.gitignore`, `.gitattributes`, `.dockerignore`, `.coderabbit.yaml`, `.claude/`).
+
+Verification results (exact commands and outputs):
+
+| Check | Result |
+| --- | --- |
+| `git -C /root/scratch/upstream ls-tree -r --name-only FETCH_HEAD \| wc -l` | 11,691 |
+| Upstream tracked paths missing on disk after restore | 0 |
+| `find vendor/horizon -type f \| wc -l` | 11,692 (11,691 tracked + this `SOURCE.md`) |
+| `du -sh vendor/horizon` | 203M |
+| `find vendor/horizon \( -name '*.jar' -o -name 'horizon-data.bin' -o -name 'engine-data.zip' \) -print` | empty |
+| `.local/` / `target/` directories under `vendor/horizon` | none |
+| `cargo metadata --no-deps --format-version 1 --manifest-path vendor/horizon/Cargo.toml` | exit 0 — 77 workspace members, root `/root/horizon-server/vendor/horizon` |
+
+The 1,713 newly restored files join the 212 binaries restored in section 8, giving a complete,
+parseable, build-oriented reference tree. **No Mojang content is included:** no game/server JARs,
+assets, decompiled source, generated resource folders, `.local/`, prepared data
+(`horizon-data.bin`), `engine-data.zip`, or real player/world data — none of these exist in the
+upstream commit's tracked tree, and the exclusion check above is empty. All content remains
+upstream's LGPL-3.0 source-controlled material. No build/test/clippy was run; no commit was made.
