@@ -42,8 +42,9 @@ Use a fresh scratch directory each time; never point a test at a real world or p
    ```sh
    ./horizon-server prepare --dir <server-dir> --prepared-bundle <horizon-prepared-26.3.zip>
    ```
-   This is the no-PC path: download the CI-produced `horizon-prepared-26.3.zip` artifact on the
-   tablet and pass its path. The archive must contain `prepared-manifest.json`
+   This is the no-PC path: download the CI-produced `horizon-prepared-26.3.zip` artifact (run
+   45360507408, SHA-256 `e749897938efa6fd645c293ca5b6082417c0cdbc14ef45fa0c66ed310ab5fa16`,
+   44,872,319 bytes) on the tablet and pass its path. The archive must contain `prepared-manifest.json`
    (`version: 26.3`, per-file SHA-256 and size). `--prepared-folder <dir>` still works if a prepared
    folder is available.
    Verify a tampered file or path is rejected, and that the accepted copy lands in

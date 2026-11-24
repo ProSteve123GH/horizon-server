@@ -198,6 +198,14 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — no-PC prepared data: CI workflow `prepare-data.yml` + `scripts/generate_prepared_bundle.sh`
+  generated a verified 26.3 dataset from official Mojang inputs with build-time-only Java 25
+  (5,214 files verified, 23,218 prepared files). Run 45360507408 **green**. Artifact independently
+  downloaded: 44,872,319 bytes, SHA-256
+  `e749897938efa6fd645c293ca5b6082417c0cdbc14ef45fa0c66ed310ab5fa16`, 23,219 ZIP entries (manifest
+  + 23,218 listed files), includes facts/block-tags/registries/commands/horizon-resources.json, no
+  JARs/engine-data.zip/horizon-data.bin. Binary-side `accept_bundle` verifier was exercised in that
+  CI run. This satisfies the approved interim prepared-data source; Java is never needed at runtime.
 - 2026-11-24 — **second real tablet runtime evidence (owner)**: with the argv fix, the binary
   downloaded and SHA-1-verified the 26.3 client JAR, staged resources, reached the engine, printed
   `Horizon 0.1.0`, and then stopped at `no horizon-resources.json in .../.horizon/resources/26.3`
