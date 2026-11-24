@@ -24,24 +24,26 @@ been started beyond repository setup and this investigation.
 |---|---|---|
 | Local repo | `git status -sb` → `## server...origin/server`; `git log -1` → `8d8b1c9` | OK |
 | GitHub remote/auth | `gh api user --jq .login` → `ProSteve123GH`; remote default branch `server` | OK |
-| Host resources | `free -m` → ~32 GB RAM; `df -h /` → ~321 GB free; `nproc` → 8 | OK |
-| Rust toolchain | `command -v cargo rustc rustup` → all MISSING | BLOCKER |
-| Android NDK / clang | `command -v ndk-build clang` → MISSING; no Android env vars | BLOCKER |
-| Tablet access | Research agent: no `adb`, no `/dev/bus/usb`, no Android mounts, ports 5037/5555/8022 closed, no Termux host/credentials in docs/scripts/history. Gateway `:22` is a Linux SSH host, not Android. | BLOCKED — owner must supply access |
+| Host resources | Owner's GuppyNodes panel: **3 vCPU, 2.5 GiB RAM (~712 MiB baseline used), 10 GiB disk (~4.9 GiB used)**; free tier, do not max it out. `df -h` reports the host overlay and is misleading. | CONSTRAINED — no heavy local builds |
+| Rust toolchain | Installed locally (1.95.0) for light verification; heavy builds belong in CI due to container limits | CONSTRAINED |
+| Android NDK / clang | Pinned r28c verified locally, then removed to conserve quota; CI workflow installs it | CI-MANAGED |
+| Tablet access | No `adb`, no `/dev/bus/usb`, no Android mounts, ports 5037/5555/8022 closed. Owner confirms tablet testing is done on their side. | OWNER-RUN — provide build + test plan, never claim results here |
 | Android build checkout | `/root/horizon-android-build` absent; owner clarified `/root/horizon-android-old` is the local source **and** build/tooling tree | RESOLVED |
-| Mojang files in repo | `git ls-files` → only `.gitignore`, `AGENTS.md`, `README.md`, `TASK.md` | OK |
+| Mojang files in repo | `git ls-files` contains no JAR/asset/prepared-data files; `git grep` found no credential strings | OK |
 
-The inherited `/root/horizon-android-old/LOCAL_ENVIRONMENT.md` describes the *old* agent workspace
-(700 MB RAM under proot, no local builds). The machine observed here is different (~32 GB RAM,
-8 CPUs); that note's no-local-build rule is retained as a safety default until a local toolchain and
-validation policy are established in local-only `DEV.md`.
+The inherited `/root/horizon-android-old/LOCAL_ENVIRONMENT.md` forbids local builds/tests in that
+old workspace; none were ever run there. The owner confirms this container is Linux x86_64 in proot
+inside a GuppyNodes/Pterodactyl **free** server: 3 vCPU, 2.5 GiB RAM (about 712 MiB used at idle),
+10 GiB disk (about 4.9 GiB used); `df -h` shows the host overlay and is misleading. Heavy compilation
+is deliberately avoided to keep from maxing the server; it belongs in CI. Only light, bounded
+`cargo test` runs are used for module verification. Tablet validation is explicitly owner-run.
 
 ## Hard blockers requiring owner decisions (do not mark as resolved)
 
-1. **No Android tablet access path exists in this environment.** Evidence: no `adb`, no
-   `/dev/bus/usb`, no Android mounts, TCP 5037/5555/8022 closed, no Termux SSH host/IP/credentials
-   in docs/scripts/history. Owner must provide a device connection or run the acceptance steps on
-   the tablet and return logs. Until then M1.3–M1.8 cannot be validated and must stay unchecked.
+1. **Tablet validation is owner-run.** This container has no `adb`, no `/dev/bus/usb`, no Android
+   mounts and ports 5037/5555/8022 closed; the owner confirmed the tablet test is theirs to run.
+   Our deliverable is a reproducible ARM64 build plus a written acceptance procedure
+   (`TABLET_TEST_PLAN.md`). M1.3–M1.8 stay unchecked until real device logs are returned.
 2. **A truly headless engine (no wgpu/winit) does not exist upstream.** Evidence: upstream
    `crates/horizon-client/Cargo.toml:63-64`, `horizon-client-render/Cargo.toml:66-67`,
    `horizon-client-lib/Cargo.toml:62-63`, `horizon-client-input/Cargo.toml:14` make them
@@ -102,7 +104,8 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
   local Android source and build/tooling tree is `/root/horizon-android-old`. Repository docs
   updated accordingly; no second tree will be assumed.
 - 2026-11-24 — toolchain/device research: network reachable (`static.rust-lang.org`, `dl.google.com`,
-  `sh.rustup.rs` all HTTP 200), ~321 GB disk and 32 GB RAM available. Fork pins Rust 1.95,
+  `sh.rustup.rs` all HTTP 200). `df`/`free` initially reported host values; the owner later corrected
+  these to the panel's 2.5 GiB RAM / 10 GiB disk quota. Fork pins Rust 1.95,
   `aarch64-linux-android`, NDK 28.2.13676358, android-36. No tablet access path exists in this
   environment, so all real-device acceptance items remain blocked.
 - 2026-11-24 — build pipeline research: fork's native server build recipe identified
@@ -135,3 +138,17 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — `/root/horizon-android-old/LOCAL_ENVIRONMENT.md` respected: no build, test, game or
   launcher was ever run in that workspace; all compilation happened in the new repo with a freshly
   installed toolchain. No emulator, cross-compile or host result is claimed as tablet validation.
+- 2026-11-24 — bootstrap assertion fix re-verified: `cargo test` → **16 passed, 0 failed**.
+- 2026-11-24 — vanilla server-directory layout and player-list modules added (lazy creation, no
+  overwrite, path-traversal guard, unknown JSON fields preserved): `cargo test` → **23 passed,
+  0 failed**. These are module-level tests only, not server runtime validation.
+- 2026-11-24 — workspace restart removed `/root/horizon-upstream`; the pinned 26.3 data-pack format
+  was re-verified from the upstream commit via raw GitHub content:
+  `DATA_PACK_FORMAT: (i64, i64) = (121, 0)`, `DATA_VERSION = 5023`. Datapack discovery/validation
+  module added against that pin: directory + ZIP packs, format/range checks, deterministic ordering.
+- 2026-11-24 — full local suite after datapack addition: `cargo test` → **26 passed, 0 failed**
+  (includes directory/ZIP datapack, player-list, server-dir and EULA tests). Module-level evidence
+  only; no runtime/tablet claims.
+- 2026-11-24 — owner clarified the real environment: Linux x86_64 proot inside a Pterodactyl server
+  (3 vCPU, 2.5 GiB RAM, 10 GiB disk quota; `df -h` misleading), no adb, tablet testing is owner-run.
+  `TABLET_TEST_PLAN.md` added as the handoff procedure; local heavy builds stopped.

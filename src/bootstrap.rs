@@ -33,7 +33,6 @@ pub const ACCEPTED_MANIFEST_SHA1: &[&str] = &[
 
 const MAX_METADATA_BYTES: u64 = 16 * 1024 * 1024;
 const MAX_ARTIFACT_BYTES: u64 = 512 * 1024 * 1024;
-const VERSION_MANIFEST_URL: &str = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
 
 #[derive(Debug)]
 pub enum BootstrapError {

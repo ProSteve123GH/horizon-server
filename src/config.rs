@@ -140,8 +140,7 @@ pub fn load_or_create(dir: &Path) -> io::Result<String> {
     Ok(rendered)
 }
 
-/// Read a property without creating or rewriting the file (used by `--help`-style paths).
-#[allow(dead_code)]
+/// Read a property without creating or rewriting the file.
 pub fn read_value(dir: &Path, key: &str) -> io::Result<Option<String>> {
     let text = fs::read_to_string(dir.join("server.properties"))?;
     Ok(Properties::parse(&text).get(key).map(str::to_owned))

@@ -30,7 +30,8 @@ parity evidence — a successful compile is not validation.
   architecture, behavior, protocol (777), vanilla parity, `research-lock.json` version pins and
   upstream changes. Default branch `main`, LGPL-3.0. The local reference checkout
   `/root/horizon-upstream` was observed on `main` at commit `a02b2838d34f4c99726cca349ec0b4d62c5c8fa5`
-  (2026-11-21) and may lag the live repository. Trust the live repository for current state.
+  (2026-11-21) but was removed by a workspace restart. Use the live repository (or a fresh
+  pinned checkout) for current state; do not assume the old path still exists.
 - `https://github.com/ProSteve123GH/horizon-android-old` — the owner's **Android port fork** of
   upstream, local checkout `/root/horizon-android-old`. Observed on branch `dev/26.4` at commit
   `6f2e86c3a85e831035f60242d18a80435fd1d3c2`; its remote HEAD branch is `android`. Reference for the

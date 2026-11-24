@@ -6,8 +6,11 @@
 
 mod bootstrap;
 mod config;
-mod eula;
+mod datapack;
 mod engine;
+mod eula;
+mod player_lists;
+mod server_dir;
 
 use std::env;
 use std::io::{self, IsTerminal};
@@ -23,6 +26,7 @@ fn help_text() -> &'static str {
        horizon-server [options]                 Start in the foreground (default)\n\
        horizon-server init                      Explicit first-run setup only\n\
        horizon-server bootstrap                 Verify/fetch pinned game resources\n\
+       horizon-server datapacks                 List valid vanilla datapacks in the world\n\
        horizon-server --help                    Show this help without network access\n\
        horizon-server --version                 Print server and Minecraft versions\n\
      \n\
@@ -63,6 +67,13 @@ fn prepare_directory(dir: &Path, args: &[String], injected_answer: Option<&str>)
     fs_create_dir(dir)?;
     let properties = config::load_or_create(dir).map_err(|error| format!("server.properties: {error}"))?;
     println!("Loaded server.properties ({} bytes).", properties.len());
+
+    let level_name = config::read_value(dir, "level-name")
+        .ok()
+        .flatten()
+        .unwrap_or_else(|| "world".to_owned());
+    server_dir::ensure_layout(dir, &level_name)
+        .map_err(|error| format!("server directory: {error}"))?;
 
     let state = eula::ensure_eula(
         dir,
@@ -137,6 +148,25 @@ fn run(args: &[String], injected_answer: Option<&str>) -> i32 {
             return 2;
         }
     };
+
+    if args.iter().any(|argument| argument == "datapacks") {
+        let level = config::read_value(&dir, "level-name")
+            .ok()
+            .flatten()
+            .unwrap_or_else(|| "world".to_owned());
+        match datapack::discover(&dir.join(level)) {
+            Ok(packs) => {
+                for pack in packs {
+                    println!("{} (format {})", pack.name, pack.format);
+                }
+                return 0;
+            }
+            Err(error) => {
+                eprintln!("horizon-server: datapacks: {error}");
+                return 2;
+            }
+        }
+    }
 
     if let Err(error) = prepare_directory(&dir, args, injected_answer) {
         eprintln!("horizon-server: {error}");
