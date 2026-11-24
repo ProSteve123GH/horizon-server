@@ -314,8 +314,11 @@ impl Bootstrap {
 
     /// Resource directory, always inside the server directory and outside the executable.
     pub fn resource_dir(&self) -> PathBuf {
+        // cache_dir is <server>/.horizon/downloads/26.3; resources live beside downloads, not
+        // inside it (tablet run 2026-11-24 staged into .horizon/downloads/resources by mistake).
         self.cache_dir
             .parent()
+            .and_then(Path::parent)
             .unwrap_or(&self.cache_dir)
             .join("resources")
             .join(VERSION)

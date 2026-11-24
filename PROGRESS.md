@@ -198,6 +198,15 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — **second real tablet runtime evidence (owner)**: with the argv fix, the binary
+  downloaded and SHA-1-verified the 26.3 client JAR, staged resources, reached the engine, printed
+  `Horizon 0.1.0`, and then stopped at `no horizon-resources.json in .../.horizon/resources/26.3`
+  (crash `crash-2026-11-24_16.32.29-server.txt`). Two defects found: (1) staging wrote to
+  `.horizon/downloads/resources/26.3` instead of `.horizon/resources/26.3` — fixed in
+  `Bootstrap::resource_dir`; (2) `try_lock() not supported` on Termux log file — fixed by skipping
+  advisory locking on Android in vendored `logging.rs` (documented in `vendor/horizon/SOURCE.md`).
+  Remaining blocker: a verified prepared-data folder (facts.json, block-tags.json, registries.json,
+  commands.json + `horizon-resources.json`) must be supplied via `horizon-server prepare`.
 - 2026-11-24 — rebuild after the tablet-crash fix: CI run 45344696712 **green** (all steps incl.
   host smoke test, no-mod audit and packaging). New artifact independently verified: two archive
   entries only, ELF64/AArch64, 91,568,712 bytes. Archive SHA-256

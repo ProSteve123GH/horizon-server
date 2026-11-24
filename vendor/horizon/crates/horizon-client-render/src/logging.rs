@@ -231,10 +231,17 @@ pub fn open_latest(dir: &Path) -> io::Result<Option<Latest>> {
         .create(true)
         .truncate(false)
         .open(dir.join(".lock"))?;
+    // horizon-server patch: Termux's filesystem (FUSE/emulated storage) does not support
+    // advisory file locks; still open the lock file so Latest keeps it alive, but skip locking.
+    #[cfg(not(target_os = "android"))]
     match lock.try_lock() {
         Ok(()) => {}
         Err(fs::TryLockError::WouldBlock) => return Ok(None),
         Err(fs::TryLockError::Error(e)) => return Err(e),
+    }
+    #[cfg(target_os = "android")]
+    {
+        let _ = &lock;
     }
     let mut file = OpenOptions::new()
         .read(true)

@@ -259,3 +259,8 @@ and `key_without_modifiers()` are also unavailable on Android. Fourth minimal pa
 on Android and use `event.logical_key.clone()` for the layout name there (a follow-up compile error
 in CI run 45329349790 showed the field is `logical_key` in winit 0.30). The dedicated server has no
 keyboard input; desktop behavior is unchanged.
+
+A real tablet run (2026-11-24, `crash-2026-11-24_16.32.29-server.txt`) showed
+`could not open .../logs/latest.log: try_lock() not supported` on Termux's filesystem. Fifth minimal
+patch: in `crates/horizon-client-render/src/logging.rs::open_latest`, skip `try_lock()` on Android
+while still opening the `.lock` file for `Latest`. Desktop logging/locking is unchanged.
