@@ -28,7 +28,7 @@ been started beyond repository setup and this investigation.
 | Rust toolchain | `command -v cargo rustc rustup` → all MISSING | BLOCKER |
 | Android NDK / clang | `command -v ndk-build clang` → MISSING; no Android env vars | BLOCKER |
 | Tablet access | `command -v adb` → MISSING; `/dev` has no USB/tty device | BLOCKER (under investigation) |
-| `/root/horizon-android-build` | `ls -ld` → No such file or directory | BLOCKER (under investigation) |
+| Android build checkout | `/root/horizon-android-build` absent; owner clarified `/root/horizon-android-old` is the local source **and** build/tooling tree | RESOLVED |
 | Mojang files in repo | `git ls-files` → only `.gitignore`, `AGENTS.md`, `README.md`, `TASK.md` | OK |
 
 The inherited `/root/horizon-android-old/LOCAL_ENVIRONMENT.md` describes the *old* agent workspace
@@ -72,6 +72,8 @@ validation policy are established in local-only `DEV.md`.
   `DEV.md` ignored by `.gitignore:2:/DEV.md`, remote head equals local HEAD, remote tree contains
   only the four tracked files, remote default branch `server`.
 - 2026-11-24 — environment inventory: no `cargo`, `rustc`, `rustup`, `ndk-build`, `clang`, `adb`,
-  `cmake`, `ninja` or `make` on PATH; `/root/horizon-android-build` absent; GitHub API reachable;
-  three research agents launched for device/toolchain discovery, headless source mapping and Android
-  build pipeline analysis.
+  `cmake`, `ninja` or `make` on PATH; GitHub API reachable; three research agents launched for
+  device/toolchain discovery, headless source mapping and Android build pipeline analysis.
+- 2026-11-24 — owner clarification: `/root/horizon-android-build` is not a separate checkout; the
+  local Android source and build/tooling tree is `/root/horizon-android-old`. Repository docs
+  updated accordingly; no second tree will be assumed.

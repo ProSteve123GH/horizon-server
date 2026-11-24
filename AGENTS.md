@@ -38,9 +38,10 @@ parity evidence — a successful compile is not validation.
   existing Android work. Its `CONTRIBUTING_ANDROID.md`, `docs/android.md`,
   `docs/android-game-files.md`, `docs/datapack-upgrade.md` and `AGENTS.md` are the Android-side
   references. Do not copy Android UI, JNI, SAF, touch/Bedrock control or APK packaging concerns here.
-- `/root/horizon-android-build` — intended **local Android build/tooling checkout**. It was **not
-  present** when this repository was initialized; do not invent its contents. Inspect it if/when it
-  appears and record what is actually there in `DEV.md`.
+- `/root/horizon-android-build` — **not a separate checkout.** The owner clarified that the local
+  Android build/tooling checkout named in `TASK.md` is `/root/horizon-android-old` itself; the path
+  `/root/horizon-android-build` does not exist here. Inspect `/root/horizon-android-old/tools/` and
+  its workflows for the build tooling. Do not look for or invent a second tree.
 - `/root/horizon-android-mod-builds` — a *different* repository
   (`ProSteve123GH/horizon-android-mod-builds`, a mod build service with `worker/`, `scripts/` and
   `fixtures/`). It is not the expected build-tooling checkout and must not be treated as such.
