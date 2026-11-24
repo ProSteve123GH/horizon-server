@@ -5,9 +5,10 @@ Minecraft Java Edition 26.3 dedicated server executable named `horizon-server`. 
 `horizon-rust/horizon` and not a subfolder of the Android fork. Source repositories are references
 only; do not implement, port, or build server functionality inside them.
 
-**Current status: repository initialization only.** No server implementation, porting, or build has
-been started. Do not begin the `TASK.md` milestones until the owner explicitly starts the task after
-reviewing this initialized repository.
+**Current status: implementation authorized and underway.** The owner has explicitly started the
+task; milestone one is Android ARM64. [`PROGRESS.md`](PROGRESS.md) is the live acceptance checklist
+and evidence log. Do not claim completion until its acceptance criteria are met with runtime and
+parity evidence — a successful compile is not validation.
 
 ## Read first
 
@@ -54,9 +55,10 @@ run test.
 
 ## Rules
 
-- **Initialization only for now.** Do not add engine code, functional server implementation, ports,
-  Cargo workspaces, CI workflows or build scripts until the owner starts the task. Documentation and
-  repository hygiene only.
+- **Work follows `TASK.md` and `PROGRESS.md`.** Milestone one is Android ARM64 only. Keep the other
+  12 targets possible but deferred until ARM64 is stable and validated on the tablet. Record exact
+  commands, toolchain versions, test results and blockers in `PROGRESS.md`/local `DEV.md`; never
+  weaken an acceptance criterion to finish.
 - **Never commit Mojang's files**: game/server JARs, assets, decompiled source, generated resource
   folders, `.local/`, prepared data (`horizon-data.bin`), or real player/world data. The product will
   download and verify inputs directly from official endpoints at runtime; no game content is bundled.

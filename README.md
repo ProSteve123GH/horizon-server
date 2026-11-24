@@ -6,10 +6,9 @@ built from the Horizon engine. The release artifact is a single native executabl
 Python, Docker or helper binary at runtime. Each operator's executable downloads and verifies the
 required Mojang inputs directly from official endpoints; no Mojang game files are bundled.
 
-**Status: repository initialization only.** No server implementation, porting or build has begun.
-The owner must explicitly start the task before any `TASK.md` milestone work. See
-[`TASK.md`](TASK.md) for the full requirements, target matrix and definition of done, and
-[`AGENTS.md`](AGENTS.md) for contributor rules.
+**Status: implementation underway, milestone one (Android ARM64).** See [`PROGRESS.md`](PROGRESS.md)
+for the live acceptance checklist, evidence and blockers. [`TASK.md`](TASK.md) holds the full
+requirements, target matrix and definition of done; [`AGENTS.md`](AGENTS.md) holds contributor rules.
 
 ## Scope
 
