@@ -7,13 +7,22 @@
 use std::path::Path;
 use std::process::{Command, Stdio};
 
+use crate::bootstrap;
 use crate::engine::INTERNAL_ENV;
+use crate::prepared;
 
 /// Arguments for the hidden internal engine mode. They must be valid upstream game arguments:
 /// `entry::prepare()` parses every argv entry strictly, so our private handoff uses an env var.
 /// No secret is passed on the command line.
 pub fn engine_args(dir: &Path) -> Vec<String> {
-    let resources = dir.join(".horizon/resources/26.3");
+    // Prefer the operator-supplied (or CI-generated) verified prepared dataset. Only fall back to
+    // the client-JAR staging dir when no accepted dataset exists; that fallback cannot start the
+    // engine on its own, which is correct and produces the upstream "missing prepared files" error.
+    let resources = prepared::load_accepted(dir, bootstrap::VERSION)
+        .ok()
+        .flatten()
+        .map(|data| data.root)
+        .unwrap_or_else(|| dir.join(".horizon/resources/26.3"));
     // Upstream's launch parser stops at --dedicated and treats every later argument as a
     // dedicated-server option, so global --resources MUST come first (tablet crash 2026-11-24).
     vec![
@@ -58,6 +67,14 @@ pub fn run_engine(dir: &Path) -> Result<i32, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+
+    fn scratch(label: &str) -> std::path::PathBuf {
+        let dir = std::env::temp_dir().join(format!("horizon-supervisor-{label}-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        dir
+    }
 
     #[test]
     fn internal_argv_is_valid_for_upstream_entry() {
@@ -70,6 +87,23 @@ mod tests {
         assert!(args.contains(&"--nogui".to_owned()));
         assert!(args.contains(&"/srv/horizon/.horizon/resources/26.3".to_owned()));
         assert!(args.contains(&"/srv/horizon".to_owned()));
+    }
+
+    #[test]
+    fn accepted_prepared_folder_is_used_as_resources() {
+        let dir = scratch("resources");
+        let prepared_dir = dir.join(".horizon/prepared/26.3");
+        fs::create_dir_all(&prepared_dir).unwrap();
+        fs::write(
+            prepared_dir.join("prepared-manifest.json"),
+            r#"{"version":"26.3","files":[]}"#,
+        )
+        .unwrap();
+        fs::write(prepared_dir.join("horizon-resources.json"), "{}").unwrap();
+
+        let args = engine_args(&dir);
+        assert!(args.contains(&prepared_dir.to_string_lossy().into_owned()));
+        fs::remove_dir_all(&dir).unwrap();
     }
 
     #[test]

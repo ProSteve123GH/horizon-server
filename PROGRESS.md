@@ -198,6 +198,12 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — **third real tablet runtime evidence (owner)**: `prepare --prepared-bundle` succeeded
+  (`Accepted prepared data at .../.horizon/prepared/26.3`) and the engine started, but still reported
+  `no horizon-resources.json in .../.horizon/resources/26.3`. Cause: the supervisor hard-coded the
+  staged client-resource dir as `--resources` instead of the accepted prepared folder. Fixed by
+  resolving `prepared::load_accepted()` first, with a unit test. Local suite **43 unit + 3
+  integration passed**.
 - 2026-11-24 — bundle-capable ARM64 build: CI runs 45359218116 and **45361395498 (final) GREEN**
   (host tests, smoke test, no-mod audit, packaging). Final artifact independently verified: ELF64/
   AArch64. Archive SHA-256 `9be4d4cdd2e33ce08bb58f494863fd52df091f857199f72de2c427d263435837`;
