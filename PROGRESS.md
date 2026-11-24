@@ -198,6 +198,11 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — rebuild after the tablet-crash fix: CI run 45344696712 **green** (all steps incl.
+  host smoke test, no-mod audit and packaging). New artifact independently verified: two archive
+  entries only, ELF64/AArch64, 91,568,712 bytes. Archive SHA-256
+  `a8db77448d231b2317265d6c9f7f0c695ac0b285735e334c52396837860b9e16`, binary SHA-256
+  `32b9a4e4bb9be73927baaf6767fa503b0538bf41e71579ef417a50bf7397c8fb`. Awaiting owner retest.
 - 2026-11-24 — **first real tablet runtime evidence (owner)**: engine started on Android aarch64
   (crash report `crash-2026-11-24_14.57.04-server.txt`, log lines `Horizon 0.1.0` then
   `Horizon: resources is not a recognized option`). Root cause: upstream's launch parser stops at
