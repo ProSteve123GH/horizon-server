@@ -27,18 +27,18 @@ fn run_engine_seam(_args: &[String]) -> Result<(), String> {
     // platform(), point table and dispatch instrumentation are all initialized. This is the
     // batch fix for the tablet's "engine platform socket is not installed" crash.
     horizon_guest_stack::prepare_main();
-    let _ = horizon_engine_slots::install_seal(horizon_mod_points::__private::seal);
-    horizon_mod_api::__private::initialize()
+    let _ = horizon_engine_slots::install_seal(mod_points::__private::seal);
+    mod_api::__private::initialize()
         .map_err(|reason| format!("mod platform initialization failed: {reason}"))?;
     let _ = horizon_engine_slots::install_platform(horizon_engine_slots::Platform {
-        install_packages: horizon_mod_api::__private::install_packages,
-        install_registration_data: horizon_mod_api::__private::install_registration_data,
-        install_parts: horizon_mod_api::__private::install_parts,
-        profiler_is_enabled: horizon_mod_api::__private::profiler::is_enabled,
-        profiler_start: horizon_mod_api::__private::profiler::start,
-        profiler_stop: horizon_mod_api::__private::profiler::stop,
-        profiler_summary: horizon_mod_api::__private::profiler::summary,
-        profiler_firefox_profile: horizon_mod_api::__private::profiler::firefox_profile,
+        install_packages: mod_api::__private::install_packages,
+        install_registration_data: mod_api::__private::install_registration_data,
+        install_parts: mod_api::__private::install_parts,
+        profiler_is_enabled: mod_api::__private::profiler::is_enabled,
+        profiler_start: mod_api::__private::profiler::start,
+        profiler_stop: mod_api::__private::profiler::stop,
+        profiler_summary: mod_api::__private::profiler::summary,
+        profiler_firefox_profile: mod_api::__private::profiler::firefox_profile,
     });
 
     let startup = horizon_client::entry::prepare();
