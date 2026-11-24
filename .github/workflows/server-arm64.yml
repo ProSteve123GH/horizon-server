@@ -21,6 +21,7 @@ env:
 jobs:
   arm64-cli:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -82,7 +83,17 @@ jobs:
           }
           # The packaging step needs llvm-readelf from the NDK bin directory.
           echo "$NDK" >> "$GITHUB_PATH"
-          cargo build --locked --release --target "$ANDROID_TARGET"
+          cargo build --locked --release --target "$ANDROID_TARGET" --features engine
+
+      - name: Audit that no mod runtime entered the shipped graph
+        run: |
+          for crate in wasmtime horizon-mod-host horizon-mod-wasm; do
+            if cargo tree --target "$ANDROID_TARGET" --features engine -i "$crate" >/dev/null 2>&1; then
+              echo "::error::forbidden mod runtime in server build: $crate"
+              exit 1
+            fi
+          done
+          echo "verified: shipped ARM64 graph excludes wasmtime/mod-host/mod-wasm"
 
       - name: Audit and package the single ARM64 artifact
         run: |

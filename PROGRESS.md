@@ -198,6 +198,10 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — engine-link CI run 45323508643 **success**: both "Type-check the no-mod engine entry"
+  and "Audit that no mod runtime entered the graph" passed on hosted CI. The direct entry seam is
+  now type-verified (host toolchain). ARM64 workflow updated to build with `--features engine` and
+  to repeat the no-mod graph audit for the shipped target; requires a fresh run to verify.
 - 2026-11-24 — opt-in `engine` feature prepared in the root crate: optional path deps on vendored
   `horizon-client`/`horizon-mod-package` plus the direct `entry::prepare`/`entry::start` seam in
   internal mode. Feature is **off** and not type-verified; default `cargo test` still passes
