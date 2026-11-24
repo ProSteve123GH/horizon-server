@@ -198,6 +198,11 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — **fifth real tablet runtime evidence (owner)**: platform providers initialized and
+  the engine started, then `GuestStackUnavailable: stack inspection is unsupported on this
+  platform`. Cause: the newly added `horizon_guest_stack::prepare_main()` cannot inspect stack limits
+  on Android/Termux; the Android fork never calls it. Fix: gate it to non-Android targets. Rebuild
+  pending.
 - 2026-11-24 — batch platform-provider build: CI run 45390672728 **GREEN** after fixing crate-name
   aliases (`mod_api`/`mod_points`). Host tests, engine-linked smoke test, cross-compile, no-mod
   audit and packaging all passed. Artifact verified: ELF64/AArch64, 5,330,632 bytes, archive SHA-256

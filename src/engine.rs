@@ -26,6 +26,10 @@ fn run_engine_seam(_args: &[String]) -> Result<(), String> {
     // We install the same real callbacks (with an empty mod inventory), so the engine's
     // platform(), point table and dispatch instrumentation are all initialized. This is the
     // batch fix for the tablet's "engine platform socket is not installed" crash.
+    // Android/Termux cannot inspect the main-thread stack (GuestStackUnavailable in tablet run
+    // 2026-11-24). The Android fork never calls this either, so skip it there; guest worker
+    // threads still get their properly sized stacks from the guest-stack builder.
+    #[cfg(not(target_os = "android"))]
     horizon_guest_stack::prepare_main();
     let _ = horizon_engine_slots::install_seal(mod_points::__private::seal);
     mod_api::__private::initialize()
