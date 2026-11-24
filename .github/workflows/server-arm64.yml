@@ -65,22 +65,18 @@ jobs:
           echo "AR_aarch64_linux_android=$NDK/llvm-ar" >> "$GITHUB_ENV"
           echo "CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$NDK/aarch64-linux-android28-clang" >> "$GITHUB_ENV"
           echo "NDK_BIN=$NDK" >> "$GITHUB_ENV"
+          echo "$NDK" >> "$GITHUB_PATH"
           cargo build --locked --release --target "$ANDROID_TARGET"
 
-      - name: Audit architecture and artifact shape
+      - name: Audit and package the single ARM64 artifact
         run: |
-          BINARY="target/$ANDROID_TARGET/release/horizon-server"
-          test -x "$BINARY"
-          "$NDK_BIN/llvm-readelf" -h "$BINARY" | grep -q 'Machine: AArch64'
-          "$NDK_BIN/llvm-readelf" -h "$BINARY" | grep -q 'ELF64'
-          # Exactly one executable, no Mojang content or extra sidecars in the release directory.
-          find "target/$ANDROID_TARGET/release" -maxdepth 1 -type f \
-            ! -name horizon-server ! -name '*.d' -print | grep . && exit 1 || true
-          find . -type f \( -name '*.jar' -o -name 'horizon-data.bin' \) -print | grep . && exit 1 || true
-          file "$BINARY" || true
+          mkdir -p release
+          bash scripts/package_arm64.sh \
+            "target/$ANDROID_TARGET/release/horizon-server" "$PWD/release"
+          tar -tzf release/horizon-server-aarch64-linux-android.tar.gz
 
       - uses: actions/upload-artifact@v4
         with:
           name: horizon-server-aarch64-linux-android
-          path: target/aarch64-linux-android/release/horizon-server
+          path: release/horizon-server-aarch64-linux-android.tar.gz
           if-no-files-found: error
