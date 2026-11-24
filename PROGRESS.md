@@ -198,6 +198,13 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — **engine-enabled ARM64 CI run 45330665004 GREEN**: host tests, cross-compile with
+  `--features engine`, no-mod graph audit, artifact audit/package and upload all passed (23m28s).
+  Downloaded artifact independently verified: archive contains only `horizon-server` and
+  `horizon-server.sha256`; ELF64/AArch64 (machine 183), **91,568,072 bytes**; archive SHA-256
+  `c97e653060eda6f5bfa57874ec463eaabb609e1aee6826c828864f4f73cc1cdf`, binary SHA-256
+  `7965bbd03167cac28cb5cad28f9b08d2ff7be4dd52b489c60fde76b645fde3fd`. This is a build/audit result
+  only — no runtime or tablet validation has occurred.
 - 2026-11-24 — sixth engine-enabled ARM64 run 45329349790: host tests green, cross-compile failed
   with E0609 `no field key on KeyEvent` at the patched window handler. Corrected the Android fallback
   to use `event.logical_key.clone()` (winit 0.30 field name). Rebuild pending.

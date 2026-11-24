@@ -9,7 +9,8 @@ required Mojang inputs directly from official endpoints; no Mojang game files ar
 **Status: implementation underway, milestone one (Android ARM64).** The CLI/config/EULA/bootstrap/
 datapack/self-spawn scaffolding is unit-tested (41 unit + 3 integration tests passing), and a direct
 no-mod engine entry seam has been type-verified on hosted CI. An engine-enabled ARM64 cross-build is
-in progress; no playable server or tablet validation exists yet. See [`PROGRESS.md`](PROGRESS.md)
+green (single AArch64 ELF, audited). No playable-server or tablet validation evidence exists yet.
+See [`PROGRESS.md`](PROGRESS.md)
 for the live acceptance checklist, evidence and blockers, and [`TABLET_TEST_PLAN.md`](TABLET_TEST_PLAN.md)
 for the owner-run acceptance procedure. [`TASK.md`](TASK.md) holds the full requirements, target
 matrix and definition of done; [`AGENTS.md`](AGENTS.md) holds contributor rules.

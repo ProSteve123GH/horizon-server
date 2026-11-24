@@ -4,10 +4,12 @@ This container has no adb, no device nodes and no Termux connection; the owner c
 validation is performed on their side. **No result in this repository claims any of these tests
 passed.** The checklist items in `PROGRESS.md` stay unchecked until real device logs are returned.
 
-> Current status: the ARM64 build produced so far is the CLI/configuration skeleton. The headless
-> engine, prepared-data generation and resource-bootstrap end-to-end flow are **not integrated**.
-> Do not run this plan against the current binary expecting a playable server; use it as the
-> acceptance procedure for the integrated ARM64 build.
+> Current status: the ARM64 artifact from CI run 45330665004 contains the dedicated engine linked
+> through the no-mod entry seam (single ELF, 91,568,072 bytes, SHA-256
+> `7965bbd03167cac28cb5cad28f9b08d2ff7be4dd52b489c60fde76b645fde3fd`). It has **not been run on a
+> tablet**, and no world/client/parity result exists yet. Use this plan as the acceptance procedure
+> and return the evidence listed at the end; steps that fail because prepared tables or runtime
+> behavior are incomplete must be reported as failures, not silently skipped.
 
 ## Prerequisites returned with the build
 
