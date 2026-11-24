@@ -201,6 +201,13 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — **release v0.0.1 published**: https://github.com/ProSteve123GH/horizon-server/releases/tag/v0.0.1
+  with exactly two assets — `horizon-server-aarch64-linux-android` (92,851,528 bytes, SHA-256
+  `0a06a2858c416e8bd97050d7283990e532efebc34b59a99f1757f6035d1ca92b`) and
+  `horizon-prepared-26.3.zip` (44,872,319 bytes, SHA-256
+  `e749897938efa6fd645c293ca5b6082417c0cdbc14ef45fa0c66ed310ab5fa16`). No nested `.zip`/`.tar.gz`
+  wrappers, no sidecars, no Mojang files. Release notes list checksums, evidence and the two approved
+  deviations. Dev `.tar.gz` remains a CI artifact for convenience.
 - 2026-11-24 — **SEVENTH (SUCCESSFUL) TABLET RUN — milestone-one runtime achieved**. Owner log:
   resources loaded (35,723 block states, 1,658 items, 67 biomes, 7 worker threads), vanilla
   `Starting minecraft server version 26.3`, properties loaded, keypair generated, bound `*:25565`,

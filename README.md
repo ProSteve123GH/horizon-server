@@ -4,8 +4,10 @@
 
 Horizon Server is a separate server product designed to run from a single native executable. The long-term goal is to let an operator place `horizon-server` in an empty directory, complete first-run setup, and launch a vanilla-style dedicated server without installing a separate Horizon client, launcher, JDK, Python runtime, or helper executable.
 
+**First release:** [`v0.0.1`](https://github.com/ProSteve123GH/horizon-server/releases/tag/v0.0.1) — Android ARM64 executable plus a verified `horizon-prepared-26.3.zip`. Download both assets from the release page; no Mojang files are bundled.
+
 > [!WARNING]
-> **This project is still in active development and is not ready for production worlds.** The CLI, resource/bootstrap work, and single-executable engine integration are being developed, but a successful build is not proof that the server is playable. End-to-end runtime validation and vanilla-client testing are still outstanding. Check [`PROGRESS.md`](PROGRESS.md) for the current evidence and blockers before trying a build.
+> **This project is still in active development and is not ready for production worlds.** Milestone one has now been run on a real ARM64 tablet — the server started, loaded a world, accepted a vanilla 26.3 client and shut down cleanly. Several acceptance items remain unverified (fresh EULA refusal, datapack reload, dimension travel with a client, offline cache reuse). Check [`PROGRESS.md`](PROGRESS.md) for exact evidence before using real worlds.
 
 ## Project goals
 
@@ -29,7 +31,9 @@ The first implementation milestone targets Android ARM64. The repository current
 - a supervisor that re-launches the same executable through a private internal engine entry point;
 - host-side tests and an Android ARM64 CI cross-build/package workflow.
 
-**What is not yet demonstrated:** a complete end-to-end server session, a successful connection from an unmodified Minecraft Java 26.3 client, reliable world save/reload, or full vanilla command/datapack parity. The engine entry point being linked or type-checked in CI must not be confused with a fully validated playable server.
+**Demonstrated on the tablet:** pinned 26.3 bootstrap verification, resource loading, world creation/loading, all three dimensions saved on `stop`, console commands, a graceful shutdown, and a connection from an unmodified Minecraft Java 26.3 client that joined and moved.
+
+**Still not demonstrated:** a fresh first-run EULA refusal, `--offline` cache reuse, datapack enable/disable persistence and `/reload`, dimension travel with a connected client, and full vanilla command parity. Cross-compilation and CI smoke tests are not substitutes for these device checks.
 
 For the exact checklist and supporting evidence, see [`PROGRESS.md`](PROGRESS.md).
 
@@ -39,7 +43,7 @@ The eventual release matrix contains 13 OS/architecture combinations. Developmen
 
 | Platform target | Intended test environment | Current status |
 |---|---|---|
-| **Android ARM64** (`aarch64-linux-android`) | Termux on an ARM64 Android device | **First milestone.** CI cross-build exists; end-to-end runtime acceptance is pending. |
+| **Android ARM64** (`aarch64-linux-android`) | Termux on an ARM64 Android device | **First milestone, runtime validated.** Server started, saved worlds, accepted a vanilla 26.3 client, shut down cleanly. Some parity checks remain; see `PROGRESS.md`. |
 | **Linux x86_64** | An unprivileged x86_64 Linux proot/container environment (not Android), or a Debian 12 Docker container that can run ordinary Linux binaries | Near-term target. Build and runtime validation are not yet claimed. The test environment should not assume root access. |
 | **Linux ARM64** | ARM64 GNU/Linux userspace, including Linux distributions running under proot where applicable | Planned target. This is a GNU/Linux binary and is distinct from the Android/Termux executable. Runtime validation is pending. |
 | **Windows x86 / x86_64 / ARM64** | Windows CI runners, followed by community or other native runtime testing | Planned for early CI enablement. No Windows runtime support is claimed yet. |
