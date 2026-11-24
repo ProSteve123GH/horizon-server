@@ -1,0 +1,138 @@
+name: prepare-data
+
+# README — verified prepared data for the tablet
+#
+# The owner has no PC, so CI plays the PC. This workflow downloads ONLY Mojang's
+# official, hash-pinned Minecraft 26.3 inputs (version JSON, jars, libraries,
+# asset objects from piston-meta/resources.download.minecraft.net) and runs the
+# vendored upstream `horizon-prepare` with a JDK 25 AT BUILD TIME to produce
+# `.local/horizon-client/26.3`. The final archive contains that prepared folder
+# plus a prepared-manifest.json of size/SHA-256 for every file — no Mojang jars,
+# classes, `.local/` folder or engine-data.zip. The shipped server needs no
+# Java at runtime: it verifies and installs the archive itself.
+#
+# Owner procedure:
+#   1. Run this workflow manually (`workflow_dispatch` intentionally; no push
+#      trigger, to avoid noisy runs).
+#   2. Download the artifact `horizon-prepared-26.3`
+#      (file `horizon-prepared-26.3.zip`) onto the tablet.
+#   3. In a fresh server directory on the tablet:
+#        horizon-server prepare --prepared-bundle /path/to/horizon-prepared-26.3.zip
+#      src/prepared.rs checks every path, size and SHA-256 and atomically
+#      installs the data under `.horizon/prepared/26.3`. No Java, no network.
+#
+# If preparation cannot run for a concrete reason, the job fails loudly; no
+# substitute bundle is ever fabricated.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  RUST_TOOLCHAIN: "1.95.0"
+  JAVA_MAJOR: "25"
+  VERSION: "26.3"
+  # The generator defaults OUT_DIR to $RUNNER_TEMP/horizon-prepared-out; keep
+  # the same path in the steps below (runner.temp is only valid in step env/with).
+
+jobs:
+  prepared-bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install pinned Rust 1.95 (host target)
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+            | sh -s -- -y --default-toolchain "$RUST_TOOLCHAIN" --profile minimal --no-modify-path
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      # Preferred: the generator fetches Mojang's own Java 25 runtime (the path
+      # the Android fork uses). This JDK is a fallback if that runtime has no
+      # javac. It is build-time only and never enters the archive or the server.
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_MAJOR }}
+
+      - name: Generate verified prepared-data bundle
+        run: bash scripts/generate_prepared_bundle.sh
+
+      # scripts/audit_artifact.py enforces "one executable per release dir" and
+      # rejects .zip there, so it does not apply to a data archive. This is the
+      # equivalent, archive-specific audit: one expected file, exact member set,
+      # no forbidden payloads, and a manifest that round-trips byte for byte.
+      - name: Audit the archive (prepared-data equivalent)
+        env:
+          OUT_DIR: ${{ runner.temp }}/horizon-prepared-out
+          ARCHIVE: ${{ runner.temp }}/horizon-prepared-out/horizon-prepared-${{ env.VERSION }}.zip
+        run: |
+          set -euo pipefail
+          emitted=$(find "$OUT_DIR" -maxdepth 1 -type f -printf '%f\n' | sort)
+          [ "$emitted" = "horizon-prepared-$VERSION.zip" ] || {
+            echo "::error::expected exactly one archive in $OUT_DIR, got: $emitted"
+            exit 1
+          }
+          python3 - "$ARCHIVE" "$VERSION" <<'PY'
+          import json
+          import sys
+          import zipfile
+          from pathlib import Path
+
+          archive, version = Path(sys.argv[1]), sys.argv[2]
+          manifest_name = "prepared-manifest.json"
+          with zipfile.ZipFile(archive) as bundle:
+              names = bundle.namelist()
+              manifest = json.loads(bundle.read(manifest_name))
+              assert manifest["version"] == version, manifest["version"]
+              listed = [entry["path"] for entry in manifest["files"]]
+              assert len(listed) == len(set(listed)), "duplicate manifest paths"
+              assert set(names) == {manifest_name, *listed}, "unlisted or missing archive members"
+              for info in bundle.infolist():
+                  low = info.filename.lower()
+                  assert info.is_dir() is False, info.filename
+                  assert ((info.external_attr >> 16) & 0o170000) != 0o120000, info.filename
+                  assert not low.endswith((".jar", ".class", ".zip")), info.filename
+                  assert not (low.startswith(".local/") or "/.local/" in low), info.filename
+                  assert low != "engine-data.zip", info.filename
+          print(f"audited {len(listed)} verified prepared files in {archive.name}")
+          PY
+
+      # The strongest check: feed the archive to the very verifier the shipped
+      # server uses (src/prepared.rs::accept_bundle) in a throwaway directory.
+      - name: Verify with the shipped server's prepared-bundle verifier
+        env:
+          CARGO_TARGET_DIR: ${{ runner.temp }}/verify-target
+          ARCHIVE: ${{ runner.temp }}/horizon-prepared-out/horizon-prepared-${{ env.VERSION }}.zip
+        run: |
+          rm -rf "$RUNNER_TEMP/verify-server"
+          cargo run --locked -- \
+            --dir "$RUNNER_TEMP/verify-server" --accept-eula \
+            prepare --prepared-bundle "$ARCHIVE"
+          test -f "$RUNNER_TEMP/verify-server/.horizon/prepared/$VERSION/horizon-resources.json"
+
+      - name: Report archive digest and size
+        env:
+          OUT_DIR: ${{ runner.temp }}/horizon-prepared-out
+        run: |
+          archive="$OUT_DIR/horizon-prepared-$VERSION.zip"
+          sha="$(sha256sum "$archive" | cut -d' ' -f1)"
+          size="$(stat -c%s "$archive")"
+          {
+            echo "### Prepared data $VERSION"
+            echo "- archive: \`horizon-prepared-$VERSION.zip\`"
+            echo "- SHA-256: \`$sha\`"
+            echo "- size: $size bytes"
+            echo "- on the tablet: \`horizon-server prepare --prepared-bundle <archive>\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "sha256=$sha size=$size"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: horizon-prepared-26.3
+          path: ${{ runner.temp }}/horizon-prepared-out/horizon-prepared-26.3.zip
+          if-no-files-found: error
+          retention-days: 90
