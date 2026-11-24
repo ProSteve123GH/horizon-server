@@ -1,0 +1,49 @@
+name: release-assets
+
+# One-off helper: attach release assets from CI artifacts. This container cannot reach
+# uploads.github.com, but hosted runners can. Keeps the release to exactly two assets.
+
+on:
+  workflow_dispatch:
+    inputs:
+      binary_run:
+        description: server-arm64 run ID containing the raw binary artifact
+        required: true
+        default: "45428207616"
+      prepared_run:
+        description: prepare-data run ID containing the prepared ZIP artifact
+        required: true
+        default: "45360507408"
+      tag:
+        description: existing release tag
+        required: true
+        default: "v0.0.1"
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts from CI runs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh run download "${{ inputs.binary_run }}" \
+            -n horizon-server-aarch64-linux-android-raw -D raw
+          gh run download "${{ inputs.prepared_run }}" \
+            -n horizon-prepared-26.3 -D prepared
+          ls -l raw prepared
+
+      - name: Attach exactly two release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ inputs.tag }}" \
+            raw/horizon-server-aarch64-linux-android \
+            prepared/horizon-prepared-26.3.zip \
+            --clobber
+          gh api "repos/${{ github.repository }}/releases/tags/${{ inputs.tag }}" \
+            --jq '.assets[] | "\(.name) \(.size) bytes"'
