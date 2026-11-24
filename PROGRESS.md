@@ -198,6 +198,11 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — opt-in `engine` feature prepared in the root crate: optional path deps on vendored
+  `horizon-client`/`horizon-mod-package` plus the direct `entry::prepare`/`entry::start` seam in
+  internal mode. Feature is **off** and not type-verified; default `cargo test` still passes
+  (**41 unit + 3 integration, 0 failed**) after lockfile resolution (5,108 lines). CI engine-link
+  run 45323508643 remains in progress.
 - 2026-11-24 — engine-link feasibility spike result: a standalone crate can call
   `horizon_client::entry::prepare()` + `entry::start()` with an empty `Runtime::default()` and no-op
   code hooks, reaching the real dedicated loop without `horizon_game::main()`. `cargo tree` on the
