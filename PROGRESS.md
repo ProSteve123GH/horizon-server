@@ -198,12 +198,12 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
-- 2026-11-24 — bundle-capable ARM64 build: CI run 45359218116 **green** (host tests, smoke test,
-  no-mod audit, packaging). Artifact independently verified: two entries, ELF64/AArch64,
-  91,578,632 bytes. Archive SHA-256
-  `3e181edda87f9850c4347973f7b227249109a31202078cc2489f0a7779e39762`; binary SHA-256
-  `fdbff36356b4e5bdfaea14a1fb602e2f715afd0feef4011938600fc8ae7fba7c`. Combined with the prepared
-  bundle below, this is the first complete no-PC handoff for the tablet.
+- 2026-11-24 — bundle-capable ARM64 build: CI runs 45359218116 and **45361395498 (final) GREEN**
+  (host tests, smoke test, no-mod audit, packaging). Final artifact independently verified: ELF64/
+  AArch64. Archive SHA-256 `9be4d4cdd2e33ce08bb58f494863fd52df091f857199f72de2c427d263435837`;
+  binary SHA-256 `39248702cadd9ab9d085bb24f7795e552384d424fa5242e6d524ad9e1facf358`. (Binary hashes
+  differ between CI runs; builds are not byte-reproducible yet.) Combined with the prepared bundle
+  below, this is the complete no-PC handoff for the tablet.
 - 2026-11-24 — no-PC prepared data: CI workflow `prepare-data.yml` + `scripts/generate_prepared_bundle.sh`
   generated a verified 26.3 dataset from official Mojang inputs with build-time-only Java 25
   (5,214 files verified, 23,218 prepared files). Run 45360507408 **green**. Artifact independently
