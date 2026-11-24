@@ -513,7 +513,8 @@ mod tests {
                 ("assets/minecraft/sounds/step.ogg", "ignored"),
             ],
         );
-        let bootstrap = Bootstrap { version_json: vec![], cache_dir: dir.clone() };
+        let cache_dir = dir.join(".horizon/downloads/26.3");
+        let bootstrap = Bootstrap { version_json: vec![], cache_dir };
         let staged = bootstrap.stage_client_resources(&jar).unwrap();
         assert!(staged.join("data/minecraft/tags.json").exists());
         assert!(staged.join("assets/minecraft/font/default.json").exists());
@@ -529,7 +530,8 @@ mod tests {
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
         let jar = synthetic_jar(&dir, &[("data/../evil.txt", "bad")]);
-        let bootstrap = Bootstrap { version_json: vec![], cache_dir: dir.clone() };
+        let cache_dir = dir.join(".horizon/downloads/26.3");
+        let bootstrap = Bootstrap { version_json: vec![], cache_dir };
         assert!(matches!(
             bootstrap.stage_client_resources(&jar),
             Err(BootstrapError::UnsafeArchivePath(_))

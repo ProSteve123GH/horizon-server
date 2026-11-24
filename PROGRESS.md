@@ -198,6 +198,11 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
 - 2026-11-24 — vendored upstream tree completed: all 11,691 tracked files at pinned commit restored
   (11,692 files incl. `SOURCE.md`, 203 MB); forbidden-file scan empty; `cargo metadata --no-deps`
   parses **77 workspace members**. Committed in `3aba9e5`.
+- 2026-11-24 — second engine-enabled ARM64 run 45325420328 failed earlier in **host tests**: two
+  bootstrap staging tests shared `/tmp/resources/26.3` because their synthetic `cache_dir` was the
+  temp dir itself rather than a production-like `.horizon/downloads/26.3` path. Fixed the fixtures;
+  local `cargo test --locked` → **41 unit + 3 integration passed, 0 failed**. This was a real
+  test-isolation bug found only by CI, not a flake.
 - 2026-11-24 — first engine-enabled ARM64 CI run 45324523961 **failed** (exit 101) while compiling
   `horizon-mod-package` for Android: E0433 `cannot find holder in crate` at
   `crates/horizon-mod-package/src/runtime_leases.rs:431`, because upstream gates `holder`/
