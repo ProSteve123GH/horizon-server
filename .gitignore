@@ -1,0 +1,60 @@
+# Local-only development notes and machine-specific state (never commit).
+/DEV.md
+/LOCAL_ENVIRONMENT.md
+*.local.md
+*.local.txt
+
+# Rust / Cargo build outputs. Release artifacts are produced by CI, not committed.
+/target/
+**/target/
+/build/
+/dist/
+/out/
+*.rs.bk
+*.profraw
+
+# Compiled binaries and platform libraries.
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.o
+
+# Mojang game inputs, prepared data and generated server state.
+# These are downloaded/verified by the product at runtime and are never distributed.
+/.local/
+.local/
+/game-files/
+/.horizon/
+/horizon-data.bin
+/horizon-resources.json
+*.jar
+
+# Live server state. Default working directory is a server directory, not a source tree.
+/eula.txt
+/server.properties
+/server.toml
+/logs/
+/ops.json
+/whitelist.json
+/banned-players.json
+/banned-ips.json
+/usercache.json
+/world/
+/world_nether/
+/world_the_end/
+
+# Local scratch, temporary output and editor/IDE files.
+/scratch/
+/tmp/
+/.tmp/
+*.log
+*.pyc
+__pycache__/
+.venv/
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
