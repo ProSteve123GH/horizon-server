@@ -10,6 +10,7 @@ mod datapack;
 mod engine;
 mod eula;
 mod player_lists;
+mod prepared;
 mod server_dir;
 mod supervisor;
 
@@ -27,6 +28,7 @@ fn help_text() -> &'static str {
        horizon-server [options]                 Start in the foreground (default)\n\
        horizon-server init                      Explicit first-run setup only\n\
        horizon-server bootstrap                 Verify/fetch pinned game resources\n\
+       horizon-server prepare                   Accept a verified prepared-data folder\n\
        horizon-server datapacks                 List valid vanilla datapacks in the world\n\
        horizon-server --help                    Show this help without network access\n\
        horizon-server --version                 Print server and Minecraft versions\n\
@@ -35,6 +37,7 @@ fn help_text() -> &'static str {
        --dir <path>          Server directory (default: current working directory)\n\
        --accept-eula         Explicitly accept the EULA for non-interactive setup\n\
        --offline             Require already-verified cached resources (no network)\n\
+       --prepared-folder <path>  Verified prepared-data folder (interim source)\n\
      \n\
      The Minecraft EULA must be accepted explicitly: answer the terminal prompt or set\n\
      --accept-eula after reading https://aka.ms/MinecraftEULA. No game files are bundled."
@@ -62,6 +65,19 @@ fn server_directory(args: &[String]) -> Result<PathBuf, String> {
         }
     }
     env::current_dir().map_err(|error| format!("cannot read working directory: {error}"))
+}
+
+fn option_value(args: &[String], name: &str) -> Option<String> {
+    let mut iterator = args.iter();
+    while let Some(argument) = iterator.next() {
+        if argument == name {
+            return iterator.next().cloned();
+        }
+        if let Some(value) = argument.strip_prefix(&format!("{name}=")) {
+            return Some(value.to_owned());
+        }
+    }
+    None
 }
 
 fn prepare_directory(dir: &Path, args: &[String], injected_answer: Option<&str>) -> Result<(), String> {
@@ -176,6 +192,26 @@ fn run(args: &[String], injected_answer: Option<&str>) -> i32 {
     if let Err(error) = prepare_directory(&dir, args, injected_answer) {
         eprintln!("horizon-server: {error}");
         return 2;
+    }
+
+    if args.iter().any(|argument| argument == "prepare") {
+        let folder = option_value(args, "--prepared-folder")
+            .or_else(|| env::var("HORIZON_PREPARED_FOLDER").ok())
+            .unwrap_or_default();
+        if folder.is_empty() {
+            eprintln!("horizon-server: prepare requires --prepared-folder <path>");
+            return 2;
+        }
+        match prepared::accept_folder(&dir, Path::new(&folder), bootstrap::VERSION) {
+            Ok(data) => {
+                println!("Accepted prepared data at {}", data.root.display());
+                return 0;
+            }
+            Err(error) => {
+                eprintln!("horizon-server: prepared data: {error}");
+                return 2;
+            }
+        }
     }
 
     if is_init(args) {

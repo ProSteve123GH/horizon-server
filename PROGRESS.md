@@ -186,6 +186,12 @@ None of these blockers is resolved. No acceptance criterion has been weakened.
   `horizon-server-files/src/properties.rs` at commit a02b2838 (e.g. `motd=A Minecraft Server`,
   `level-type=minecraft:normal`, `white-list=true`, `max-world-size=29999984`); removed the invalid
   `pvp` server-property key. Local test run in progress.
+- 2026-11-24 — prepared-data verifier integrated as `horizon-server prepare --prepared-folder <path>`.
+  Independently reviewed (pure Rust SHA-256, no new dependency, no `unsafe`, path/symlink hardening)
+  and verified end-to-end with a synthetic manifest. Full suite: **40 unit + 3 black-box integration
+  tests passed, 0 failed**.
+- 2026-11-24 — CI watcher/fixer subagent launched with sole ownership of `.github/workflows/**` after
+  all `server-arm64` runs failed at "Verify NDK revision" (missing `source.properties` path).
 - 2026-11-24 — owner-approved interim path recorded (`79a29b4`). Parallel work launched with
   exclusive ownership: vendoring pinned upstream source (`vendor/**`), prepared-data verifier
   (`src/prepared.rs`), and artifact audit/package scripts (`scripts/**`). Integration lead retains
