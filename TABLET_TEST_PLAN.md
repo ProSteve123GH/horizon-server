@@ -4,9 +4,10 @@ This container has no adb, no device nodes and no Termux connection; the owner c
 validation is performed on their side. **No result in this repository claims any of these tests
 passed.** The checklist items in `PROGRESS.md` stay unchecked until real device logs are returned.
 
-> Current status: the ARM64 artifact from CI run 45330665004 contains the dedicated engine linked
+> Current status: the ARM64 artifact from CI run 45333795229 contains the dedicated engine linked
 > through the no-mod entry seam (single ELF, 91,568,072 bytes, SHA-256
-> `7965bbd03167cac28cb5cad28f9b08d2ff7be4dd52b489c60fde76b645fde3fd`). It has **not been run on a
+> `f973fa5884983ae26dbbdb7a76ac760577e94d8785bf0bb302990eeb7bba0d7d`, archive SHA-256
+> `d6f3a0c0de888d9dc65dc5f5fe3af941ce2034f5c0918553458942620f281548`). It has **not been run on a
 > tablet**, and no world/client/parity result exists yet. Use this plan as the acceptance procedure
 > and return the evidence listed at the end; steps that fail because prepared tables or runtime
 > behavior are incomplete must be reported as failures, not silently skipped.
