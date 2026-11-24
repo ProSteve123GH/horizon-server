@@ -1,8 +1,10 @@
-# Decisions needed from the owner
+# Decisions needed from the owner — RESOLVED 2026-11-24
 
-Implementation is progressing on the pieces that need no decision (CLI, EULA, configuration, player
-files, datapack discovery, bootstrap validation, self-spawn boundary). The three items below cannot
-be resolved inside this repository and are **not** marked done in `PROGRESS.md`.
+Owner choice: **pragmatic interim** — option **B** for item 1 (graphics crates linked, no GUI
+initialization in headless mode), option **B** for item 2 (verified prepared-data folder instead of
+pure-Rust generators), and owner-run tablet validation for item 3. Both deviations stay documented
+in `PROGRESS.md` and are not claimed as `TASK.md` compliance. The original options are preserved
+below for traceability.
 
 ## 1. Headless engine dependency boundary
 

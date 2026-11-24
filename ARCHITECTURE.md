@@ -57,8 +57,11 @@ and verified by the binary at runtime and stored outside it; nothing Mojang-deri
 1. Pin 26.3 from `research-lock.json`; allowlist official Mojang HTTPS hosts.
 2. Fetch/validate metadata and artifact hashes/sizes; choose smallest sufficient input (server JAR
    vs client JAR path **TBD** from the Android fork's proven flow). Never execute either JAR.
-3. Reconstruct required registries/tags/commands/worldgen tables in pure Rust, reusing the
-   platform-independent parts of the Android fork's `android_resources.rs`; exclude Android UI/JNI.
+3. Prepared-data source (owner-approved interim deviation): accept an operator-supplied or signed
+   verified prepared-data folder, checking a versioned manifest and hashes, rather than generating
+   `facts.json`/`registries.json`/`commands.json` in pure Rust. Reuse the platform-independent
+   `android_resources.rs::rebuild` logic where it applies; exclude Android UI/JNI. This deviation is
+   recorded in `PROGRESS.md` and is **not** a claim that `TASK.md §2.3` is satisfied.
 4. Write a versioned, integrity-checked cache under the server data directory (e.g.
    `.horizon/resources/26.3`), download to partial files and atomically finalize; verify before
    reuse; support `--offline` and safe repair.
@@ -91,8 +94,10 @@ packs and a vanilla client. No mod/code-mod/WASM/plugin runtime anywhere in the 
   `horizon-server-launch`. `horizon-gameplay` still reaches `horizon-client-lib` (and therefore
   wgpu/winit), so extracting the dedicated loop is a large porting task, not a build flag.
 - No pure-Rust generator exists for the prepared data tables; both trees rely on JDK exporters or
-  a bundled `engine-data.zip`. This blocks the "binary prepares everything itself" requirement
-  without an owner decision (see `PROGRESS.md`).
+  a bundled `engine-data.zip`. The owner approved an interim deviation: link the upstream engine
+  with graphics crates present, guarantee no GUI/window/audio/JNI initialization in headless mode,
+  and accept a verified prepared-data folder. Both deviations stay visible in `PROGRESS.md`; a full
+  headless extraction and pure-Rust generators remain mandatory for strict `TASK.md` completion.
 - Build tooling pinned by the fork: Rust 1.95.0, NDK revision `28.2.13676358` (package **r28c**,
   verified — r28b is 28.1.13356709), minSdk 28, target `aarch64-linux-android`, clang/linker env
   vars recorded in local `DEV.md`. APK/Gradle/JNI paths are excluded for the server CLI.

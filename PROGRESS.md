@@ -8,15 +8,31 @@ requires runtime and parity evidence.
 ## Current phase
 
 - [x] Repository initialized (`server` branch, remote, tracked docs, ignored `DEV.md`, clean commit).
-- [ ] Phase 0 — environment/toolchain/device feasibility and source mapping (in progress).
-- [ ] Phase 1 — Android ARM64 (`aarch64-linux-android`) native Termux CLI, milestone-one acceptance.
+- [x] Phase 0 — environment/toolchain/device feasibility and source mapping complete; owner decisions
+      recorded below.
+- [~] Phase 1 — Android ARM64 (`aarch64-linux-android`) native Termux CLI. CLI/config/bootstrap/
+      datapack/self-spawn scaffolding implemented and unit-tested; engine integration and tablet
+      validation are still pending.
 - [ ] Phase 2 — remaining Android ABIs.
 - [ ] Phase 3 — Linux targets.
 - [ ] Phase 4 — Windows targets.
 - [ ] Phase 5 — macOS targets.
 
-No server functionality has been implemented, compiled or run yet. No milestone from `TASK.md` has
-been started beyond repository setup and this investigation.
+Implemented so far: CLI/config/EULA/bootstrap/datapack discovery/player files/server-dir/self-spawn
+scaffolding with host tests. No integrated game engine, no runtime server behavior and no tablet
+validation yet. See `DECISIONS_NEEDED.md` for the owner-approved interim approach.
+
+## Owner decisions (2026-11-24)
+
+The owner selected the **pragmatic interim** path and confirmed tablet validation is theirs to run:
+
+1. Headless boundary: graphics crates may be linked but no renderer/window may be initialized in
+   headless mode; this remains a **documented deviation** from `TASK.md §2.1` until a full extraction
+   is done.
+2. Prepared 26.3 tables: an operator-supplied or signed verified prepared-data folder is accepted
+   instead of pure-Rust generation; this remains a **documented deviation** from `TASK.md §2.3`.
+3. Tablet acceptance: owner runs `TABLET_TEST_PLAN.md`; M1.3–M1.8 stay unchecked until real logs are
+   returned. No criterion is deleted or weakened.
 
 ## Environment facts (observed 2026-11-24)
 
