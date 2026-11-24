@@ -20,6 +20,19 @@ pub const MANIFEST_SHA1: &str = "11f1aefe473eefba0af62e3286c33b692807b2eb";
 pub const CLIENT_SHA1: &str = "e877b6a07acd633fb3bb475002175cec036e7b87";
 pub const SERVER_SHA1: &str = "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c";
 
+/// Accepted asset indexes (id 34) of the republished 26.3 version JSONs, from upstream
+/// `research-lock.json`. A launcher keeps whichever one it last downloaded.
+pub const ACCEPTED_ASSET_INDEX_SHA1: &[&str] = &[
+    "abfaa525f923f807df8b4e4d29c1b5e3a104adbe",
+    "1e4e4a68dece1c0f51b8f93b45da8fe8da51bcd3",
+    "0c8f43b28f837869c1e54a6aeb22c396a1548946",
+    "917ff6d74b9f635c46bac0d28857206bbcc1ffe4",
+    "331e5c80937c9cd79647ab34bdc1cbb5ef09f456",
+    "e99f9973047785b5a9d52eaf72020b97545053c9",
+    "4e950fe41d8ad13e66bde63f476afdbe0cb19f94",
+    "f3df28b441565ca4e5deb9cda856d90df62e1433",
+];
+
 /// Other 26.3 version JSONs Mojang republished; they change only non-English translations.
 pub const ACCEPTED_MANIFEST_SHA1: &[&str] = &[
     "4fe1aa1ef8da1cb95c5bad1fb98890ca56dd8ca3",
@@ -138,6 +151,8 @@ fn fetch(url: &str, limit: u64) -> Result<Vec<u8>, BootstrapError> {
 #[derive(Debug, Deserialize)]
 struct VersionJson {
     downloads: Downloads,
+    #[serde(rename = "assetIndex")]
+    asset_index: Artifact,
 }
 
 #[derive(Debug, Deserialize)]
@@ -231,6 +246,37 @@ impl Bootstrap {
             )));
         }
         Ok((client, server))
+    }
+
+    /// Download or reuse the asset index, accepting only upstream's pinned 26.3 hashes.
+    pub fn asset_index(&self, offline: bool) -> Result<PathBuf, BootstrapError> {
+        let parsed: VersionJson = serde_json::from_slice(&self.version_json)
+            .map_err(|error| BootstrapError::Json(error.to_string()))?;
+        let info = &parsed.asset_index;
+        if !is_official_url(&info.url) {
+            return Err(BootstrapError::DisallowedUrl(info.url.clone()));
+        }
+        let path = self.cache_dir.join(format!("{VERSION}-asset-index.json"));
+        if let Ok(existing) = fs::read(&path) {
+            if existing.len() as u64 == info.size && is_accepted_asset_index(&sha1_hex(&existing)) {
+                return Ok(path);
+            }
+            let _ = fs::rename(&path, path.with_extension("corrupt"));
+        }
+        if offline {
+            return Err(BootstrapError::OfflineCacheMissing(path));
+        }
+        let bytes = fetch(&info.url, MAX_METADATA_BYTES)?;
+        let digest = sha1_hex(&bytes);
+        if bytes.len() as u64 != info.size || !is_accepted_asset_index(&digest) {
+            return Err(BootstrapError::HashMismatch {
+                url: info.url.clone(),
+                expected: info.sha1.clone(),
+                actual: format!("{digest} ({} bytes)", bytes.len()),
+            });
+        }
+        write_atomically(&path, &bytes)?;
+        Ok(path)
     }
 
     /// Download (or reuse) a verified artifact. The file is written to a partial path and renamed
@@ -364,6 +410,12 @@ pub struct ArtifactInfo {
     pub size: u64,
 }
 
+fn is_accepted_asset_index(digest: &str) -> bool {
+    ACCEPTED_ASSET_INDEX_SHA1
+        .iter()
+        .any(|accepted| digest.eq_ignore_ascii_case(accepted))
+}
+
 fn is_accepted_manifest(digest: &str) -> bool {
     digest.eq_ignore_ascii_case(MANIFEST_SHA1)
         || ACCEPTED_MANIFEST_SHA1
@@ -399,6 +451,13 @@ mod tests {
         assert!(!is_official_url("https://evil.example/piston-meta.mojang.com/x"));
         assert!(!is_official_url("https://user@piston-meta.mojang.com/x"));
         assert!(!is_official_url("https://piston-meta.mojang.com:8443/x"));
+    }
+
+    #[test]
+    fn asset_index_accepts_only_pinned_26_3_hashes() {
+        assert!(is_accepted_asset_index(ACCEPTED_ASSET_INDEX_SHA1[0]));
+        assert!(is_accepted_asset_index("ABFAA525F923F807DF8B4E4D29C1B5E3A104ADBE"));
+        assert!(!is_accepted_asset_index("0".repeat(40).as_str()));
     }
 
     #[test]
